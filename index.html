@@ -503,21 +503,29 @@
         function addTecnico(btn, tipo) {
             const card = btn.closest(".cuadrilla-card");
             const tecnicosList = card.querySelector(".tecnicos-list");
+        
+            // 1. Evitar duplicados del mismo tipo (T1 o T2)
+            const yaExiste = tecnicosList.querySelector(`.tecnico-row[data-tipo="${tipo}"]`);
+            if (yaExiste) {
+                alert(`Ya agregaste el TÉCNICO ${tipo === 'T1' ? '1' : '2'} en esta cuadrilla.`);
+                return;
+            }
+        
             const sedeActualNorm = normalizeText(card.querySelector(".input-sede").value);
-    
+        
             const filteredPersonal = globalData.personal.filter(p => {
                 const matchSede = !sedeActualNorm || normalizeText(p.sede) === sedeActualNorm;
                 return matchSede && matchesCargo(p.cargo, tipo);
             });
-    
+        
             const opcionesTecnico = Array.from(new Set(filteredPersonal.map(p => p.nombre)));
-    
+        
             const row = document.createElement("div");
             row.className = "tecnico-row group relative flex items-center bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-2 pr-4 h-[56px] w-full";
             row.dataset.tipo = tipo;
-    
+        
             const bgBadge = tipo === 'T1' ? 'bg-technician-t1' : 'bg-technician-t2';
-    
+        
             row.innerHTML = `
                 <div class="w-12 flex items-center justify-center shrink-0">
                     <span class="w-8 h-8 rounded-full ${bgBadge} flex items-center justify-center font-bold text-xs text-on-surface">${tipo}</span>
@@ -529,21 +537,37 @@
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             `;
-    
+        
             tecnicosList.appendChild(row);
-    
+        
             const techInput = row.querySelector(".input-nombre-tecnico");
             const techContainer = techInput.closest(".custom-dropdown-container");
             techContainer._optionsList = opcionesTecnico;
-    
+        
             initCustomDropdown(techInput);
             updateBadgeAsignados(card);
+        
+            // 2. Deshabilitar el botón presionado
+            btn.disabled = true;
+            btn.classList.add("opacity-40", "cursor-not-allowed");
         }
-    
+        
         function removeTecnicoRow(btn) {
             const card = btn.closest(".cuadrilla-card");
-            btn.closest(".tecnico-row").remove();
+            const row = btn.closest(".tecnico-row");
+            const tipo = row.dataset.tipo; // Obtener si era T1 o T2
+        
+            row.remove();
             updateBadgeAsignados(card);
+        
+            // 3. Buscar el botón de ese tipo y volver a habilitarlo
+            const botones = card.querySelectorAll("button[onclick*='addTecnico']");
+            botones.forEach(b => {
+                if (b.getAttribute("onclick").includes(`'${tipo}'`)) {
+                    b.disabled = false;
+                    b.classList.remove("opacity-40", "cursor-not-allowed");
+                }
+            });
         }
     
         function updateBadgeAsignados(card) {
