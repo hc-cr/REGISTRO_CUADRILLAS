@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Registro de Cuadrillas</title>
+    
+    <!-- Librerías requeridas para convertir HTML a imagen y empaquetar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    
+    <style>
+        @layer base {
+            html, body { margin: 0; padding: 0; }
+            body { overscroll-behavior: none; }
+        }
+        ::-webkit-scrollbar { display: none; }
+        
+        .custom-dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+        .custom-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-dropdown-container.open .custom-dropdown-menu {
+            display: block;
+        }
+        .dropdown-item {
+            padding: 10px 14px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f2f4f6;
+            color: #191c1e;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover, .dropdown-item:active {
+            background-color: #f2f4f6;
+            color: #003f87;
+            font-weight: 700;
+        }
+        .dropdown-no-results {
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            color: #727784;
+            font-style: italic;
+        }
+
+        .custom-dropdown-menu {
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .dropdown-item {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+    </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed-dim": "#acc7ff",
+                        "surface-container-lowest": "#ffffff",
+                        "technician-t1": "#14b8a6",
+                        "background": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary": "#722b00",
+                        "on-primary-fixed-variant": "#004491",
+                        "secondary-fixed": "#dae2fd",
+                        "on-secondary": "#ffffff",
+                        "outline": "#727784",
+                        "inverse-on-surface": "#eff1f3",
+                        "technician-t2": "#f59e0b",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-dim": "#d8dadc",
+                        "secondary-container": "#dae2fd",
+                        "secondary": "#565e74",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "on-surface-variant": "#424752",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "surface-border": "#E2E8F0",
+                        "surface-tint": "#115cb9",
+                        "primary-fixed": "#d7e2ff",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-variant": "#e0e3e5",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c2c6d4",
+                        "tertiary-container": "#983c00",
+                        "inverse-primary": "#acc7ff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-primary-container": "#bbd0ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "tertiary-fixed": "#ffdbcc",
+                        "primary-container": "#0056b3",
+                        "surface-container": "#eceef0",
+                        "on-background": "#191c1e",
+                        "text-high-contrast": "#1a1a1a",
+                        "surface": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-container": "#ffc2a7",
+                        "on-primary-fixed": "#001a40",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#003f87"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    fontFamily: {
+                        body: ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+</head>
+<body class="bg-background font-body text-on-surface uppercase">
+
+    <!-- Header superior -->
+    <header class="fixed top-0 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-border z-40 flex items-center justify-between px-4 md:px-8 left-0">
+        <div class="flex items-center gap-4">
+            <h1 class="font-semibold text-lg md:text-xl text-on-surface tracking-tight">REGISTRO DE CUADRILLAS</h1>
+            <div class="h-4 w-[1px] bg-outline-variant mx-2 hidden sm:block"></div>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-technician-t1/10 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-technician-t1 animate-pulse"></span>
+                <span class="text-xs font-bold text-technician-t1">SISTEMA ONLINE</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] font-bold text-on-surface-variant">HOY</span>
+                <span id="currentDateDisplay" class="text-xs font-semibold text-on-surface">--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="relative pt-16 min-h-screen bg-background">
+        <form id="mainForm" class="flex flex-col w-full px-4 md:px-8 py-8 max-w-[800px] mx-auto min-h-screen pb-32">
+            
+            <div id="cuadrillasContainer" class="flex flex-col gap-8"></div>
+
+            <div class="w-full max-w-[800px] h-32 mt-6 bg-cover bg-center rounded-2xl opacity-40 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCOcxHHvYOOFMkKXimteTE1G-TFePL6NiFuA6FjutFpwFBlySX3lOuCvAaNNUdlrf89Gg4zdZrAxqMNOiOKpxl-5RmeuB6NdAGuXcvWOTZ96zqqwDhM15w_8uSiQHpek4gfQbTw_yuu8EdcryqV6yYVM9X-HrY3c2hLtFTbTA-KxFAKpRuOgiuN-89-CL2hm_2vt1qs7aHTLgeRRtjcobwDqiRzA-p3klDXdzrZ97J79SGOjtehxzSQ');"></div>
+            
+            <div class="fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-md p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.05)] flex justify-center z-40">
+                <div class="w-full max-w-[800px] flex flex-col sm:flex-row gap-4">
+                    <button type="button" id="btnAddCuadrilla" class="flex-1 h-[48px] rounded-lg border-2 border-surface-border bg-transparent text-on-surface font-semibold text-sm hover:bg-surface hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                        AGREGAR OTRA CUADRILLA
+                    </button>
+                    <button type="submit" id="btnSubmit" class="flex-1 h-[48px] rounded-lg bg-primary text-on-primary font-semibold text-sm hover:bg-primary-container hover:shadow-md transition-all active:shadow-inner flex items-center justify-center gap-2">
+                        ENVIAR REGISTROS
+                        <span class="material-symbols-outlined text-[20px]">send</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- Modal Spinner de Carga -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-primary/70 backdrop-blur-sm z-50 hidden flex-col items-center justify-center text-white gap-4">
+        <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        <span id="loadingText" class="font-semibold text-base">Cargando datos...</span>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz66zCFtkOvCNZQGNHyll7DdS0d-xDw0p3NvZ74UZUggEPPwiaPtZAcgZ58w9BSa4BXsg/exec";
+
+        let globalData = { sedes: [], placas: [], personal: [] };
+    
+        function normalizeText(text) {
+            return String(text || "")
+                .toUpperCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .trim();
+        }
+    
+        function matchesCargo(cargoDB, tipoRequerido) {
+            const cargoNorm = normalizeText(cargoDB);
+            const tipoNorm = normalizeText(tipoRequerido);
+    
+            if (tipoNorm === 'COORDINADOR') {
+                return cargoNorm.includes("COORDINADOR");
+            } else if (tipoNorm === 'T1') {
+                return cargoNorm.includes("TECNICO 1") || cargoNorm.includes("TECNICO1") || cargoNorm.includes("T1");
+            } else if (tipoNorm === 'T2') {
+                return cargoNorm.includes("TECNICO 2") || cargoNorm.includes("TECNICO2") || cargoNorm.includes("T2");
+            }
+            return false;
+        }
+    
+        document.addEventListener("DOMContentLoaded", async () => {
+            const now = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            document.getElementById("currentDateDisplay").innerText = now.toLocaleDateString('es-ES', options).toUpperCase();
+    
+            addNewCuadrilla();
+            await loadMasterData();
+    
+            document.getElementById("btnAddCuadrilla").addEventListener("click", () => addNewCuadrilla());
+            document.getElementById("mainForm").addEventListener("submit", handleSubmit);
+    
+            document.addEventListener("pointerdown", (e) => {
+                if (!e.target.closest(".custom-dropdown-container")) {
+                    closeAllDropdowns();
+                }
+            });
+        });
+    
+        function closeAllDropdowns() {
+            document.querySelectorAll(".custom-dropdown-container").forEach(el => el.classList.remove("open"));
+        }
+    
+        async function loadMasterData() {
+            try {
+                showLoading("Cargando personal y placas...");
+                const response = await fetch(WEB_APP_URL);
+                if (!response.ok) throw new Error("Error en la respuesta del servidor");
+                globalData = await response.json();
+                updateAllDropdowns();
+            } catch (err) {
+                console.warn("Modo sin conexión o fallo al cargar datos:", err);
+            } finally {
+                hideLoading();
+            }
+        }
+    
+        function updateAllDropdowns() {
+            document.querySelectorAll(".cuadrilla-card").forEach(card => {
+                const sedeSelect = card.querySelector(".input-sede");
+                const currentSede = sedeSelect.value;
+                sedeSelect.innerHTML = '<option value="" disabled selected>SELECCIONAR SEDE</option>' +
+                    globalData.sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+                sedeSelect.value = currentSede;
+    
+                updateCardOptions(card);
+            });
+        }
+    
+        function addNewCuadrilla() {
+            const container = document.getElementById("cuadrillasContainer");
+            const index = container.children.length + 1;
+    
+            const card = document.createElement("div");
+            card.className = "cuadrilla-card bg-surface-container-lowest rounded-xl shadow-lg relative p-6 md:p-8 flex flex-col gap-6 overflow-hidden group hover:shadow-xl transition-shadow duration-300";
+            card.dataset.id = index;
+    
+            card.innerHTML = `
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-8 -mt-8 pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between mb-2 relative">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary text-[28px]">groups</span>
+                        </div>
+                        <div>
+                            <h2 class="font-semibold text-lg text-on-surface tracking-tight">CUADRILLA #${index}</h2>
+                            <p class="text-sm text-on-surface-variant lowercase">Complete la información de la unidad de campo.</p>
+                        </div>
+                    </div>
+                    ${index > 1 ? `
+                        <button type="button" onclick="removeCuadrilla(this)" class="px-3 py-1 bg-error-container text-on-error-container rounded-lg text-xs font-bold hover:bg-error/20 transition-colors">
+                            ELIMINAR
+                        </button>
+                    ` : ''}
+                </div>
+    
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-on-surface-variant">SEDE DE OPERACIONES</label>
+                    <div class="relative w-full">
+                        <select class="input-sede w-full h-[48px] bg-surface pl-4 pr-10 rounded-lg text-on-surface font-semibold text-sm appearance-none cursor-pointer hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" required onchange="handleSedeChange(this)">
+                            <option value="" disabled selected>SELECCIONAR SEDE</option>
+                            ${globalData.sedes.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+                    </div>
+                </div>
+    
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-on-surface-variant">NOMBRE DEL COORDINADOR</label>
+                    ${createCustomDropdownHtml("input-coordinador", "SELECCIONE O DIGITE...", "search")}
+                </div>
+    
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-on-surface-variant">FECHA DE TRABAJO EN CAMPO</label>
+                        <div class="relative w-full">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+                            <input class="input-fecha w-full h-[48px] bg-surface pl-10 pr-4 rounded-lg text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" type="date" value="${new Date().toISOString().split('T')[0]}" required>
+                        </div>
+                    </div>
+    
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-on-surface-variant">PLACA DEL VEHÍCULO</label>
+                        ${createCustomDropdownHtml("input-placa", "ABC-1234", "local_shipping", true)}
+                    </div>
+                </div>
+    
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
+    
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-bold text-on-surface-variant">TÉCNICOS DE LA CUADRILLA</label>
+                        <span class="badge-asignados text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">0 ASIGNADOS</span>
+                    </div>
+    
+                    <div class="tecnicos-list flex flex-col gap-3"></div>
+    
+                    <div class="flex flex-col sm:flex-row gap-3 mt-1">
+                        <button type="button" onclick="addTecnico(this, 'T1')" class="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
+                            <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
+                            <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 1</span>
+                        </button>
+                        <button type="button" onclick="addTecnico(this, 'T2')" class="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
+                            <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
+                            <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 2</span>
+                        </button>
+                    </div>
+                </div>
+    
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
+    
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-bold text-on-surface-variant">USUARIO</label>
+                        <span class="text-xs font-bold text-on-surface-variant/50">OPCIONAL</span>
+                    </div>
+                    <div class="relative w-full">
+                        <input class="input-usuario w-full h-[48px] bg-surface px-4 rounded-lg text-on-surface font-semibold text-sm placeholder:text-on-surface-variant/50 hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" placeholder="NOMBRE DE USUARIO" type="text">
+                    </div>
+                </div>
+            `;
+    
+            container.appendChild(card);
+    
+            initCustomDropdown(card.querySelector(".input-coordinador"));
+            initCustomDropdown(card.querySelector(".input-placa"));
+    
+            updateCardOptions(card);
+        }
+    
+        function createCustomDropdownHtml(inputClass, placeholder, iconName, isPlaca = false) {
+            return `
+                <div class="custom-dropdown-container">
+                    <div class="relative w-full flex">
+                        ${iconName ? `
+                            <div class="w-12 bg-surface rounded-l-lg flex items-center justify-center border-r border-surface-border shrink-0">
+                                <span class="material-symbols-outlined text-on-surface-variant text-[20px]">${iconName}</span>
+                            </div>
+                        ` : ''}
+                        <input class="${inputClass} w-full h-[48px] bg-surface ${iconName ? 'pl-3' : 'pl-4'} pr-10 ${iconName ? 'rounded-r-lg' : 'rounded-lg'} text-on-surface font-semibold text-sm placeholder:text-on-surface-variant/50 hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" placeholder="${placeholder}" type="text" autocomplete="off" required>
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">
+                            ${isPlaca ? 'arrow_drop_down' : 'expand_more'}
+                        </span>
+                    </div>
+                    <div class="custom-dropdown-menu"></div>
+                </div>
+            `;
+        }
+    
+        function initCustomDropdown(inputElement) {
+            const container = inputElement.closest(".custom-dropdown-container");
+            const menu = container.querySelector(".custom-dropdown-menu");
+        
+            if (!container._optionsList) {
+                container._optionsList = [];
+            }
+        
+            const renderOptions = (filterText = "") => {
+                const options = container._optionsList || [];
+                const searchNorm = normalizeText(filterText);
+                const filtered = options.filter(opt => normalizeText(opt).includes(searchNorm));
+        
+                if (filtered.length === 0) {
+                    menu.innerHTML = `<div class="dropdown-no-results">SIN COINCIDENCIAS (CONSERVARÁ TEXTO LIBRE)</div>`;
+                } else {
+                    menu.innerHTML = filtered.map(opt => `<div class="dropdown-item" data-value="${opt}">${opt}</div>`).join("");
+                }
+            };
+        
+            const openMenu = () => {
+                const card = container.closest(".cuadrilla-card");
+                if (card) updateCardOptions(card);
+        
+                closeAllDropdowns();
+                container.classList.add("open");
+                renderOptions(inputElement.value);
+            };
+        
+            inputElement.addEventListener("focus", openMenu);
+            inputElement.addEventListener("click", openMenu);
+        
+            inputElement.addEventListener("input", () => {
+                inputElement.value = inputElement.value.toUpperCase();
+                if (!container.classList.contains("open")) {
+                    container.classList.add("open");
+                }
+                renderOptions(inputElement.value);
+            });
+        
+            // CONTROL DE SCROLL VS CLICK EN MÓVILES
+            let isScrolling = false;
+            let startY = 0;
+        
+            menu.addEventListener("touchstart", (e) => {
+                isScrolling = false;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+        
+            menu.addEventListener("touchmove", (e) => {
+                const moveY = e.touches[0].clientY;
+                if (Math.abs(moveY - startY) > 6) {
+                    isScrolling = true; // Fue un scroll, no un click
+                }
+            }, { passive: true });
+        
+            menu.addEventListener("click", (e) => {
+                if (isScrolling) {
+                    isScrolling = false;
+                    return; // Ignora el click si estabas desplazando la lista
+                }
+        
+                const item = e.target.closest(".dropdown-item");
+                if (item) {
+                    inputElement.value = item.dataset.value;
+                    container.classList.remove("open");
+                }
+            });
+        }
+    
+        function removeCuadrilla(btn) {
+            btn.closest(".cuadrilla-card").remove();
+        }
+    
+        function handleSedeChange(selectElement) {
+            const card = selectElement.closest(".cuadrilla-card");
+            updateCardOptions(card);
+        }
+    
+        function updateCardOptions(card) {
+            const sedeActualNorm = normalizeText(card.querySelector(".input-sede").value);
+    
+            const filteredPersonal = globalData.personal.filter(p => {
+                return !sedeActualNorm || normalizeText(p.sede) === sedeActualNorm;
+            });
+    
+            const coordinadores = filteredPersonal
+                .filter(p => matchesCargo(p.cargo, "COORDINADOR"))
+                .map(p => p.nombre);
+    
+            const coordContainer = card.querySelector(".input-coordinador").closest(".custom-dropdown-container");
+            coordContainer._optionsList = Array.from(new Set(coordinadores));
+    
+            const placaContainer = card.querySelector(".input-placa").closest(".custom-dropdown-container");
+            placaContainer._optionsList = Array.from(new Set(globalData.placas));
+    
+            card.querySelectorAll(".tecnico-row").forEach(row => {
+                const tipo = row.dataset.tipo;
+                const techInput = row.querySelector(".input-nombre-tecnico");
+                const techContainer = techInput.closest(".custom-dropdown-container");
+    
+                const listTech = filteredPersonal
+                    .filter(p => matchesCargo(p.cargo, tipo))
+                    .map(p => p.nombre);
+    
+                techContainer._optionsList = Array.from(new Set(listTech));
+            });
+        }
+    
+        function addTecnico(btn, tipo) {
+            const card = btn.closest(".cuadrilla-card");
+            const tecnicosList = card.querySelector(".tecnicos-list");
+            const sedeActualNorm = normalizeText(card.querySelector(".input-sede").value);
+    
+            const filteredPersonal = globalData.personal.filter(p => {
+                const matchSede = !sedeActualNorm || normalizeText(p.sede) === sedeActualNorm;
+                return matchSede && matchesCargo(p.cargo, tipo);
+            });
+    
+            const opcionesTecnico = Array.from(new Set(filteredPersonal.map(p => p.nombre)));
+    
+            const row = document.createElement("div");
+            row.className = "tecnico-row group relative flex items-center bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-2 pr-4 h-[56px] w-full";
+            row.dataset.tipo = tipo;
+    
+            const bgBadge = tipo === 'T1' ? 'bg-technician-t1' : 'bg-technician-t2';
+    
+            row.innerHTML = `
+                <div class="w-12 flex items-center justify-center shrink-0">
+                    <span class="w-8 h-8 rounded-full ${bgBadge} flex items-center justify-center font-bold text-xs text-on-surface">${tipo}</span>
+                </div>
+                <div class="flex-1 min-w-0 px-3 border-l border-surface-border h-full flex flex-col justify-center">
+                    ${createCustomDropdownHtml("input-nombre-tecnico", `NOMBRE DEL TÉCNICO ${tipo === 'T1' ? '1' : '2'}`, "")}
+                </div>
+                <button type="button" onclick="removeTecnicoRow(this)" class="w-10 h-10 rounded-full hover:bg-error/10 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            `;
+    
+            tecnicosList.appendChild(row);
+    
+            const techInput = row.querySelector(".input-nombre-tecnico");
+            const techContainer = techInput.closest(".custom-dropdown-container");
+            techContainer._optionsList = opcionesTecnico;
+    
+            initCustomDropdown(techInput);
+            updateBadgeAsignados(card);
+        }
+    
+        function removeTecnicoRow(btn) {
+            const card = btn.closest(".cuadrilla-card");
+            btn.closest(".tecnico-row").remove();
+            updateBadgeAsignados(card);
+        }
+    
+        function updateBadgeAsignados(card) {
+            const total = card.querySelectorAll(".tecnico-row").length;
+            const badge = card.querySelector(".badge-asignados");
+            if (badge) {
+                badge.innerText = `${total} ASIGNADOS`;
+            }
+        }
+    
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById("btnSubmit");
+            btnSubmit.disabled = true;
+            showLoading("Guardando en Google Sheets...");
+        
+            try {
+                const tarjetas = document.querySelectorAll(".cuadrilla-card");
+                let payload = [];
+        
+                tarjetas.forEach(card => {
+                    const sede = card.querySelector(".input-sede").value;
+                    const coordinador = card.querySelector(".input-coordinador").value;
+                    const fechaHora = card.querySelector(".input-fecha").value;
+                    const placa = card.querySelector(".input-placa").value;
+                    const usuario = card.querySelector(".input-usuario").value;
+        
+                    let integrantes = [];
+                    card.querySelectorAll(".tecnico-row").forEach(tRow => {
+                        const nombreTec = tRow.querySelector(".input-nombre-tecnico").value;
+                        const cargoTec = tRow.dataset.tipo;
+        
+                        if (nombreTec) {
+                            integrantes.push({ nombre: nombreTec, cargo: cargoTec });
+                        }
+                    });
+        
+                    payload.push({ sede, coordinador, fechaHora, placa, usuario, integrantes });
+                });
+        
+                // Guardado en Google Sheets sin disparar CORS (text/plain)
+                const response = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                });
+        
+                const result = await response.json();
+        
+                if (result.status === "success") {
+                    hideLoading();
+                    // Despliega el menú interactivo de 3 opciones
+                    mostrarModalOpciones(payload);
+                } else {
+                    throw new Error(result.message || "Error al registrar en Google Sheets.");
+                }
+        
+            } catch (err) {
+                hideLoading();
+                alert("Error al enviar los datos: " + err.message);
+            } finally {
+                btnSubmit.disabled = false;
+            }
+        }
+
+        function mostrarModalOpciones(payload) {
+            const oldModal = document.getElementById("modalOpcionesPDF");
+            if (oldModal) oldModal.remove();
+        
+            const modal = document.createElement("div");
+            modal.id = "modalOpcionesPDF";
+            modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 999999; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;";
+        
+            modal.innerHTML = `
+                <div style="background: #ffffff; border-radius: 16px; padding: 30px 20px; text-align: center; max-width: 420px; width: 100%; font-family: system-ui, -apple-system, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                    
+                    <!-- Checkmark Verde -->
+                    <div style="margin-bottom: 15px; display: flex; justify-content: center;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+        
+                    <!-- Título y Subtítulo -->
+                    <h2 style="margin: 0 0 8px 0; color: #003f87; font-size: 20px; font-weight: 700; text-transform: uppercase;">¡REGISTRO EXITOSO!</h2>
+                    <p style="font-size: 11px; color: #666666; margin: 0 0 30px 0; font-weight: 500; line-height: 1.4; text-transform: uppercase;">
+                        LOS DATOS SE GUARDARON CORRECTAMENTE.<br>SELECCIONA UNA OPCIÓN:
+                    </p>
+                    
+                    <!-- Contenedor de Botones -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
+                        
+                        <!-- Botón 1: Mostrar Registro -->
+                        <button id="btnVerRegistro" style="background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #003f87; flex: 1; padding: 0;">
+                            <svg style="width: 28px; height: 28px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" stroke-linecap="round" stroke-linejoin="round"></path>
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                            <span style="font-size: 10px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; line-height: 1.1; text-align: center;">MOSTRAR<br>REGISTRO</span>
+                        </button>
+        
+                        <!-- Botón 2: Compartir -->
+                        <button id="btnCompartirRegistro" style="background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #003f87; flex: 1; padding: 0;">
+                            <svg style="width: 26px; height: 26px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                            <span style="font-size: 10px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; line-height: 1.1; text-align: center;">COMPARTIR</span>
+                        </button>
+        
+                        <!-- Botón 3: Finalizar (Estilo idéntico a ENVIAR REGISTROS) -->
+                        <div style="flex: 1.3; display: flex; justify-content: flex-end;">
+                            <button id="btnFinalizarPagina" class="bg-app-blue" style="background-color: #003f87; color: #ffffff; border: none; border-radius: 9999px; padding: 10px 16px; cursor: pointer; display: flex; items-center: center; justify-content: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: background-color 0.2s; width: 100%;">
+                                <svg style="width: 20px; height: 20px; stroke: #ffffff; color: #ffffff;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                                <span style="font-size: 13px; font-weight: 700; color: #ffffff; text-transform: uppercase; white-space: nowrap;">FINALIZAR</span>
+                            </button>
+                        </div>
+        
+                    </div>
+                </div>
+            `;
+        
+            document.body.appendChild(modal);
+        
+            document.getElementById("btnVerRegistro").addEventListener("click", async () => {
+                const btn = document.getElementById("btnVerRegistro");
+                btn.style.pointerEvents = "none";
+                btn.style.opacity = "0.4";
+                await procesarPDFOpcion(payload, "VER");
+                btn.style.pointerEvents = "auto";
+                btn.style.opacity = "1";
+            });
+        
+            document.getElementById("btnCompartirRegistro").addEventListener("click", async () => {
+                const btn = document.getElementById("btnCompartirRegistro");
+                btn.style.pointerEvents = "none";
+                btn.style.opacity = "0.4";
+                await procesarPDFOpcion(payload, "COMPARTIR");
+                btn.style.pointerEvents = "auto";
+                btn.style.opacity = "1";
+            });
+        
+            document.getElementById("btnFinalizarPagina").addEventListener("click", () => {
+                location.reload();
+            });
+        }
+
+        // 2. GENERADOR DE PDF (SUSTITUYE A generateAndSharePDF)
+        async function procesarPDFOpcion(payload, accion) {
+            const sedesUnicas = Array.from(new Set(payload.map(p => p.sede).filter(Boolean)));
+            let sedeNombre = sedesUnicas.length === 1 ? sedesUnicas[0].replace(/[^a-zA-Z0-9]/g, "_").toUpperCase() : "GENERAL";
+            const dateStr = new Date().toISOString().split('T')[0];
+            const fileName = `Registro_Cuadrillas_${sedeNombre}_${dateStr}.pdf`;
+        
+            const printElement = document.createElement("div");
+            printElement.style.cssText = "width: 650px; padding: 20px; background: #ffffff; color: #000000; position: fixed; top: 0; left: 0; z-index: 9999999;";
+        
+            let contenidoHtml = `
+                <div style="font-family: Arial, sans-serif; color: #000000;">
+                    <div style="text-align: center; border-bottom: 2px solid #003f87; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h1 style="color: #003f87; margin: 0; font-size: 18px; font-weight: bold;">RESUMEN DE REGISTRO DE CUADRILLAS</h1>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #333333;">SEDE: ${sedeNombre} | FECHA: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+                    </div>
+            `;
+        
+            payload.forEach((c, idx) => {
+                contenidoHtml += `
+                    <div style="border: 1px solid #000000; border-radius: 4px; padding: 10px; margin-bottom: 12px; background: #ffffff;">
+                        <h3 style="color: #003f87; margin: 0 0 6px 0; border-bottom: 1px solid #cccccc; padding-bottom: 4px; font-size: 13px;">CUADRILLA #${idx + 1}</h3>
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 6px;">
+                            <tr><td style="padding: 2px; font-weight: bold; width: 35%;">SEDE DE OPERACIÓN:</td><td style="padding: 2px;">${c.sede || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">COORDINADOR:</td><td style="padding: 2px;">${c.coordinador || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">FECHA EN CAMPO:</td><td style="padding: 2px;">${c.fechaHora || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">PLACA VEHÍCULO:</td><td style="padding: 2px;">${c.placa || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">USUARIO REGISTRO:</td><td style="padding: 2px;">${c.usuario || 'N/A'}</td></tr>
+                        </table>
+                        <div style="font-size: 10px; font-weight: bold; margin-top: 4px; border-top: 1px dashed #aaaaaa; padding-top: 4px;">TÉCNICOS ASIGNADOS (${c.integrantes.length}):</div>
+                        <ul style="margin: 2px 0 0 0; padding-left: 15px; font-size: 10px;">
+                            ${c.integrantes.length > 0 
+                                ? c.integrantes.map(t => `<li style="margin-bottom: 2px;"><strong>[${t.cargo}]</strong> ${t.nombre}</li>`).join('')
+                                : '<li>Sin técnicos registrados</li>'
+                            }
+                        </ul>
+                    </div>
+                `;
+            });
+        
+            contenidoHtml += `</div>`;
+            printElement.innerHTML = contenidoHtml;
+            document.body.appendChild(printElement);
+        
+            await new Promise(r => setTimeout(r, 200));
+        
+            try {
+                const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
+                if (document.body.contains(printElement)) document.body.removeChild(printElement);
+        
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+                const pdf = new jsPDFLib('p', 'mm', 'a4');
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                const pdfBlob = pdf.output('blob');
+        
+                if (accion === "VER") {
+                    const fileURL = URL.createObjectURL(pdfBlob);
+                    window.open(fileURL, '_blank');
+                } else if (accion === "COMPARTIR") {
+                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: `Registro Cuadrillas - ${sedeNombre}`,
+                            files: [file]
+                        });
+                    } else {
+                        const fileURL = URL.createObjectURL(pdfBlob);
+                        window.open(fileURL, '_blank');
+                    }
+                }
+        
+            } catch (err) {
+                if (document.body.contains(printElement)) document.body.removeChild(printElement);
+                alert("Error al procesar el documento: " + err.message);
+            }
+        }
+
+        // Generador genérico de PDF según la acción seleccionada
+        async function procesarPDFOpcion(payload, accion) {
+            const sedesUnicas = Array.from(new Set(payload.map(p => p.sede).filter(Boolean)));
+            let sedeNombre = sedesUnicas.length === 1 ? sedesUnicas[0].replace(/[^a-zA-Z0-9]/g, "_").toUpperCase() : "GENERAL";
+            const dateStr = new Date().toISOString().split('T')[0];
+            const fileName = `Registro_Cuadrillas_${sedeNombre}_${dateStr}.pdf`;
+        
+            const printElement = document.createElement("div");
+            printElement.style.cssText = "width: 650px; padding: 20px; background: #ffffff; color: #000000; position: fixed; top: 0; left: 0; z-index: 9999999;";
+        
+            let contenidoHtml = `
+                <div style="font-family: Arial, sans-serif; color: #000000;">
+                    <div style="text-align: center; border-bottom: 2px solid #003f87; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h1 style="color: #003f87; margin: 0; font-size: 18px; font-weight: bold;">RESUMEN DE REGISTRO DE CUADRILLAS</h1>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #333333;">SEDE: ${sedeNombre} | FECHA: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+                    </div>
+            `;
+        
+            payload.forEach((c, idx) => {
+                contenidoHtml += `
+                    <div style="border: 1px solid #000000; border-radius: 4px; padding: 10px; margin-bottom: 12px; background: #ffffff;">
+                        <h3 style="color: #003f87; margin: 0 0 6px 0; border-bottom: 1px solid #cccccc; padding-bottom: 4px; font-size: 13px;">CUADRILLA #${idx + 1}</h3>
+                        <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 6px;">
+                            <tr><td style="padding: 2px; font-weight: bold; width: 35%;">SEDE DE OPERACIÓN:</td><td style="padding: 2px;">${c.sede || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">COORDINADOR:</td><td style="padding: 2px;">${c.coordinador || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">FECHA EN CAMPO:</td><td style="padding: 2px;">${c.fechaHora || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">PLACA VEHÍCULO:</td><td style="padding: 2px;">${c.placa || 'N/A'}</td></tr>
+                            <tr><td style="padding: 2px; font-weight: bold;">USUARIO REGISTRO:</td><td style="padding: 2px;">${c.usuario || 'N/A'}</td></tr>
+                        </table>
+                        <div style="font-size: 10px; font-weight: bold; margin-top: 4px; border-top: 1px dashed #aaaaaa; padding-top: 4px;">TÉCNICOS ASIGNADOS (${c.integrantes.length}):</div>
+                        <ul style="margin: 2px 0 0 0; padding-left: 15px; font-size: 10px;">
+                            ${c.integrantes.length > 0 
+                                ? c.integrantes.map(t => `<li style="margin-bottom: 2px;"><strong>[${t.cargo}]</strong> ${t.nombre}</li>`).join('')
+                                : '<li>Sin técnicos registrados</li>'
+                            }
+                        </ul>
+                    </div>
+                `;
+            });
+        
+            contenidoHtml += `</div>`;
+            printElement.innerHTML = contenidoHtml;
+            document.body.appendChild(printElement);
+        
+            await new Promise(r => setTimeout(r, 200));
+        
+            try {
+                const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
+                if (document.body.contains(printElement)) document.body.removeChild(printElement);
+        
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+                const pdf = new jsPDFLib('p', 'mm', 'a4');
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                const pdfBlob = pdf.output('blob');
+        
+                if (accion === "VER") {
+                    // Abre el documento en una pestaña nueva
+                    const fileURL = URL.createObjectURL(pdfBlob);
+                    window.open(fileURL, '_blank');
+                } else if (accion === "COMPARTIR") {
+                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: `Registro Cuadrillas - ${sedeNombre}`,
+                            files: [file]
+                        });
+                    } else {
+                        // Fallback si la API de compartir no está disponible en el navegador
+                        const fileURL = URL.createObjectURL(pdfBlob);
+                        window.open(fileURL, '_blank');
+                    }
+                }
+        
+            } catch (err) {
+                if (document.body.contains(printElement)) document.body.removeChild(printElement);
+                alert("Error al procesar el documento: " + err.message);
+            }
+        }
+    
+        function showLoading(text) {
+            document.getElementById("loadingText").innerText = text;
+            document.getElementById("loadingOverlay").style.display = "flex";
+        }
+    
+        function hideLoading() {
+            document.getElementById("loadingOverlay").style.display = "none";
+        }
+    </script>
+</body>
+</html>
