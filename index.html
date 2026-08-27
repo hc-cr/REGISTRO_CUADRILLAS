@@ -339,24 +339,25 @@
     
                     <div class="tecnicos-list flex flex-col gap-3"></div>
     
-                    <div class="flex flex-col gap-2 mt-1">
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button type="button" onclick="addTecnico(this, 'T1')" class="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
+                    <div class="flex flex-col sm:flex-row gap-2 mt-1">
+                        <!-- Botón Técnico 1 -->
+                        <button type="button" onclick="addTecnico(this, 'T1')" class="btn-add-t1 flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
                             <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
                             <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 1</span>
                         </button>
-                        <button type="button" onclick="addTecnico(this, 'T2')" class="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
+                        
+                        <!-- Botón Técnico 2 -->
+                        <button type="button" onclick="addTecnico(this, 'T2')" class="btn-add-t2 flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
                             <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
                             <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 2</span>
                         </button>
+                    
+                        <!-- Botón Ruta Sin Técnico 2 -->
+                        <button type="button" onclick="addRutaSinTecnico2(this)" class="btn-sin-t2 flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
+                            <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
+                            <span class="text-xs font-bold group-hover:text-primary transition-colors">RUTA SIN TÉCNICO 2</span>
+                        </button>
                     </div>
-                
-                    <!-- Casilla para marcar Sin Técnico 2 -->
-                    <label class="flex items-center gap-2 cursor-pointer mt-1 self-end">
-                        <input type="checkbox" class="check-sin-t2 w-4 h-4 text-primary rounded border-surface-border focus:ring-primary" onchange="toggleSinTecnico2(this)">
-                        <span class="text-xs font-semibold text-on-surface-variant">Sin Técnico 2</span>
-                    </label>
-                </div>
                 </div>
     
                 <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
@@ -586,6 +587,86 @@
             }
         }
     
+                // 1. Nueva función para agregar la fila inhabilitada de "RUTA SIN TÉCNICO 2"
+        function addRutaSinTecnico2(btn) {
+            const card = btn.closest(".cuadrilla-card");
+            const tecnicosList = card.querySelector(".tecnicos-list");
+        
+            // Verificar si ya existe T2 o Ruta Sin T2
+            const yaExiste = tecnicosList.querySelector(`.tecnico-row[data-tipo="T2"]`);
+            if (yaExiste) {
+                alert("Ya registraste la opción para el TÉCNICO 2 en esta cuadrilla.");
+                return;
+            }
+        
+            const row = document.createElement("div");
+            row.className = "tecnico-row group relative flex items-center bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-2 pr-4 h-[56px] w-full opacity-90";
+            row.dataset.tipo = "T2";
+            row.dataset.isSinT2 = "true"; // Identificador especial
+        
+            row.innerHTML = `
+                <div class="w-12 flex items-center justify-center shrink-0">
+                    <span class="w-8 h-8 rounded-full bg-technician-t2 flex items-center justify-center font-bold text-xs text-on-surface">T2</span>
+                </div>
+                <div class="flex-1 min-w-0 px-3 border-l border-surface-border h-full flex flex-col justify-center">
+                    <input type="text" class="input-nombre-tecnico w-full bg-surface-container-high border border-surface-border rounded px-3 py-1.5 text-xs font-bold text-on-surface uppercase cursor-not-allowed select-none" value="RUTA SIN TÉCNICO 2" readonly tabindex="-1" />
+                </div>
+                <button type="button" onclick="removeTecnicoRow(this)" class="w-10 h-10 rounded-full hover:bg-error/10 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            `;
+        
+            tecnicosList.appendChild(row);
+            if (typeof updateBadgeAsignados === "function") updateBadgeAsignados(card);
+        
+            // Deshabilitar tanto el botón "+ AGREGAR TÉCNICO 2" como el de "+ RUTA SIN TÉCNICO 2"
+            const btnT2 = card.querySelector(".btn-add-t2");
+            const btnSinT2 = card.querySelector(".btn-sin-t2");
+            
+            if (btnT2) { btnT2.disabled = true; btnT2.classList.add("opacity-40", "cursor-not-allowed"); }
+            if (btnSinT2) { btnSinT2.disabled = true; btnSinT2.classList.add("opacity-40", "cursor-not-allowed"); }
+        }
+        
+        // 2. Modificación a removeTecnicoRow para reactivar ambos botones si se borra el T2
+        function removeTecnicoRow(btn) {
+            const card = btn.closest(".cuadrilla-card");
+            const row = btn.closest(".tecnico-row");
+            const tipo = row.dataset.tipo;
+        
+            row.remove();
+            if (typeof updateBadgeAsignados === "function") updateBadgeAsignados(card);
+        
+            if (tipo === "T2") {
+                const btnT2 = card.querySelector(".btn-add-t2");
+                const btnSinT2 = card.querySelector(".btn-sin-t2");
+                if (btnT2) { btnT2.disabled = false; btnT2.classList.remove("opacity-40", "cursor-not-allowed"); }
+                if (btnSinT2) { btnSinT2.disabled = false; btnSinT2.classList.remove("opacity-40", "cursor-not-allowed"); }
+            } else if (tipo === "T1") {
+                const btnT1 = card.querySelector(".btn-add-t1");
+                if (btnT1) { btnT1.disabled = false; btnT1.classList.remove("opacity-40", "cursor-not-allowed"); }
+            }
+        }
+        
+        // 3. Modificación a addTecnico para deshabilitar también "+ RUTA SIN TÉCNICO 2" si se presiona T2
+        const originalAddTecnico = addTecnico;
+        addTecnico = function(btn, tipo) {
+            const card = btn.closest(".cuadrilla-card");
+            const tecnicosList = card.querySelector(".tecnicos-list");
+            
+            if (tipo === 'T2' && tecnicosList.querySelector('.tecnico-row[data-tipo="T2"]')) {
+                alert("Ya agregaste el TÉCNICO 2 en esta cuadrilla.");
+                return;
+            }
+            
+            originalAddTecnico(btn, tipo);
+        
+            if (tipo === 'T2') {
+                const btnSinT2 = card.querySelector(".btn-sin-t2");
+                if (btnSinT2) { btnSinT2.disabled = true; btnSinT2.classList.add("opacity-40", "cursor-not-allowed"); }
+            }
+        };
+
+        // 4. handleSubmit con validaciones estrictas segun la tabla
         async function handleSubmit(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById("btnSubmit");
@@ -601,9 +682,7 @@
                     const fechaHora = card.querySelector(".input-fecha").value;
                     const placa = card.querySelector(".input-placa").value;
                     const usuario = card.querySelector(".input-usuario").value;
-                    const checkSinT2 = card.querySelector(".check-sin-t2")?.checked;
         
-                    // Obtener filas de técnicos agregadas en la tarjeta
                     const rowT1 = card.querySelector('.tecnico-row[data-tipo="T1"]');
                     const rowT2 = card.querySelector('.tecnico-row[data-tipo="T2"]');
         
@@ -621,46 +700,33 @@
                         return;
                     }
         
-                    // --- REGLA 2 Y 3: VALIDACIÓN Y AUTOCOMPLETADO TÉCNICO 2 ---
-                    let finalT2 = valT2;
-        
-                    if (!valT2) {
-                        if (checkSinT2) {
-                            // Si no seleccionó nombre pero MARCÓ "Sin Técnico 2" -> Autocompleta
-                            finalT2 = "SIN TÉCNICO 2";
-                        } else {
-                            // Si no eligió nombre Y NO marcó "Sin Técnico 2" -> Bloqueo con alerta de error
-                            errores = true;
-                            if (rowT2) {
-                                const inputT2 = rowT2.querySelector(".input-nombre-tecnico");
-                                inputT2.classList.add("border-2", "border-red-500", "bg-red-50");
-                            }
-                            alert(`Cuadrilla #${index + 1}: Seleccione el TÉCNICO 2 de la lista o marque la casilla 'Sin Técnico 2'.`);
-                            return;
+                    // --- REGLA 2 Y 3: VALIDACIÓN DE TÉCNICO 2 ---
+                    if (!rowT2 || !valT2) {
+                        errores = true;
+                        if (rowT2) {
+                            const inputT2 = rowT2.querySelector(".input-nombre-tecnico");
+                            inputT2.classList.add("border-2", "border-red-500", "bg-red-50");
                         }
+                        alert(`Cuadrilla #${index + 1}: Debe seleccionar un TÉCNICO 2 o presionar el botón '+ RUTA SIN TÉCNICO 2'.`);
+                        return;
                     }
         
-                    // Estructurar integrantes garantizando T1 y T2
                     let integrantes = [
                         { nombre: valT1, cargo: "T1" },
-                        { nombre: finalT2, cargo: "T2" }
+                        { nombre: valT2, cargo: "T2" }
                     ];
         
                     payload.push({ sede, coordinador, fechaHora, placa, usuario, integrantes });
                 });
         
-                // Si existen errores de validación, se cancela el envío
                 if (errores) return;
         
-                // Iniciar proceso de guardado si las validaciones pasan
                 btnSubmit.disabled = true;
                 showLoading("Guardando Registro...");
         
                 const response = await fetch(WEB_APP_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payload)
                 });
         
