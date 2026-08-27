@@ -339,7 +339,8 @@
     
                     <div class="tecnicos-list flex flex-col gap-3"></div>
     
-                    <div class="flex flex-col sm:flex-row gap-3 mt-1">
+                    <div class="flex flex-col gap-2 mt-1">
+                    <div class="flex flex-col sm:flex-row gap-3">
                         <button type="button" onclick="addTecnico(this, 'T1')" class="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
                             <span class="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">add</span>
                             <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 1</span>
@@ -349,6 +350,13 @@
                             <span class="text-xs font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 2</span>
                         </button>
                     </div>
+                
+                    <!-- Casilla para marcar Sin Técnico 2 -->
+                    <label class="flex items-center gap-2 cursor-pointer mt-1 self-end">
+                        <input type="checkbox" class="check-sin-t2 w-4 h-4 text-primary rounded border-surface-border focus:ring-primary" onchange="toggleSinTecnico2(this)">
+                        <span class="text-xs font-semibold text-on-surface-variant">Sin Técnico 2</span>
+                    </label>
+                </div>
                 </div>
     
                 <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
@@ -581,34 +589,73 @@
         async function handleSubmit(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById("btnSubmit");
-            btnSubmit.disabled = true;
-            showLoading("Guardando Registro...");
         
             try {
                 const tarjetas = document.querySelectorAll(".cuadrilla-card");
                 let payload = [];
+                let errores = false;
         
-                tarjetas.forEach(card => {
+                tarjetas.forEach((card, index) => {
                     const sede = card.querySelector(".input-sede").value;
                     const coordinador = card.querySelector(".input-coordinador").value;
                     const fechaHora = card.querySelector(".input-fecha").value;
                     const placa = card.querySelector(".input-placa").value;
                     const usuario = card.querySelector(".input-usuario").value;
+                    const checkSinT2 = card.querySelector(".check-sin-t2")?.checked;
         
-                    let integrantes = [];
-                    card.querySelectorAll(".tecnico-row").forEach(tRow => {
-                        const nombreTec = tRow.querySelector(".input-nombre-tecnico").value;
-                        const cargoTec = tRow.dataset.tipo;
+                    // Obtener filas de técnicos agregadas en la tarjeta
+                    const rowT1 = card.querySelector('.tecnico-row[data-tipo="T1"]');
+                    const rowT2 = card.querySelector('.tecnico-row[data-tipo="T2"]');
         
-                        if (nombreTec) {
-                            integrantes.push({ nombre: nombreTec, cargo: cargoTec });
+                    const valT1 = rowT1 ? rowT1.querySelector(".input-nombre-tecnico").value.trim() : "";
+                    const valT2 = rowT2 ? rowT2.querySelector(".input-nombre-tecnico").value.trim() : "";
+        
+                    // --- REGLA 1: TÉCNICO 1 ES OBLIGATORIO ---
+                    if (!valT1) {
+                        errores = true;
+                        if (rowT1) {
+                            const inputT1 = rowT1.querySelector(".input-nombre-tecnico");
+                            inputT1.classList.add("border-2", "border-red-500", "bg-red-50");
                         }
-                    });
+                        alert(`Cuadrilla #${index + 1}: Debe seleccionar obligatoriamente un NOMBRE para el TÉCNICO 1.`);
+                        return;
+                    }
+        
+                    // --- REGLA 2 Y 3: VALIDACIÓN Y AUTOCOMPLETADO TÉCNICO 2 ---
+                    let finalT2 = valT2;
+        
+                    if (!valT2) {
+                        if (checkSinT2) {
+                            // Si no seleccionó nombre pero MARCÓ "Sin Técnico 2" -> Autocompleta
+                            finalT2 = "SIN TÉCNICO 2";
+                        } else {
+                            // Si no eligió nombre Y NO marcó "Sin Técnico 2" -> Bloqueo con alerta de error
+                            errores = true;
+                            if (rowT2) {
+                                const inputT2 = rowT2.querySelector(".input-nombre-tecnico");
+                                inputT2.classList.add("border-2", "border-red-500", "bg-red-50");
+                            }
+                            alert(`Cuadrilla #${index + 1}: Seleccione el TÉCNICO 2 de la lista o marque la casilla 'Sin Técnico 2'.`);
+                            return;
+                        }
+                    }
+        
+                    // Estructurar integrantes garantizando T1 y T2
+                    let integrantes = [
+                        { nombre: valT1, cargo: "T1" },
+                        { nombre: finalT2, cargo: "T2" }
+                    ];
         
                     payload.push({ sede, coordinador, fechaHora, placa, usuario, integrantes });
                 });
         
-                // Guardado en Google Sheets sin disparar CORS (text/plain)
+                // Si existen errores de validación, se cancela el envío
+                if (errores) return;
+        
+                // Iniciar proceso de guardado si las validaciones pasan
+                btnSubmit.disabled = true;
+                showLoading("Guardando Registro...");
+        
                 const response = await fetch(WEB_APP_URL, {
                     method: "POST",
                     headers: {
@@ -621,7 +668,6 @@
         
                 if (result.status === "success") {
                     hideLoading();
-                    // Despliega el menú interactivo de 3 opciones
                     mostrarModalOpciones(payload);
                 } else {
                     throw new Error(result.message || "Error al registrar en Google Sheets.");
@@ -632,6 +678,29 @@
                 alert("Error al enviar los datos: " + err.message);
             } finally {
                 btnSubmit.disabled = false;
+            }
+        }
+        
+        // Función auxiliar para controlar el estado del botón T2 al marcar la casilla
+        function toggleSinTecnico2(checkbox) {
+            const card = checkbox.closest(".cuadrilla-card");
+            const btnT2 = card.querySelector("button[onclick*='T2']");
+            const rowT2 = card.querySelector('.tecnico-row[data-tipo="T2"]');
+        
+            if (checkbox.checked) {
+                // Si ya había agregado fila de T2, la remueve
+                if (rowT2 && typeof removeTecnicoRow === "function") {
+                    removeTecnicoRow(rowT2.querySelector("button"));
+                }
+                if (btnT2) {
+                    btnT2.disabled = true;
+                    btnT2.classList.add("opacity-40", "cursor-not-allowed");
+                }
+            } else {
+                if (btnT2) {
+                    btnT2.disabled = false;
+                    btnT2.classList.remove("opacity-40", "cursor-not-allowed");
+                }
             }
         }
 
