@@ -524,15 +524,14 @@
             const opcionesTecnico = Array.from(new Set(filteredPersonal.map(p => p.nombre)));
         
             const row = document.createElement("div");
-            // Ajustamos la altura para permitir el botón inferior si es T2
-            row.className = `tecnico-row group relative flex items-center bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-2 pr-4 w-full ${tipo === 'T2' ? 'h-auto py-3' : 'h-[56px]'}`;
+            row.className = "tecnico-row group relative flex items-start bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-3 pr-4 w-full h-auto mb-2 border border-surface-border";
             row.dataset.tipo = tipo;
         
             const bgBadge = tipo === 'T1' ? 'bg-technician-t1' : 'bg-technician-t2';
         
-            // Botón/Opción rápida debajo del campo solo para Técnico 2
+            // Botón de opción rápida para T2
             const opcionRapidaHtml = tipo === 'T2' ? `
-                <div class="mt-1 flex items-center gap-2">
+                <div class="mt-2 flex items-center gap-2">
                     <button type="button" onclick="marcarRutaSinT2(this)" class="btn-quick-sin-t2 text-[11px] font-bold text-primary hover:underline flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
                         <span class="material-symbols-outlined text-[14px]">block</span>
                         MARCAR COMO "RUTA SIN T2"
@@ -541,15 +540,28 @@
             ` : '';
         
             row.innerHTML = `
-                <div class="w-12 flex items-center justify-center shrink-0">
+                <div class="w-10 flex items-center justify-center shrink-0 pt-2">
                     <span class="w-8 h-8 rounded-full ${bgBadge} flex items-center justify-center font-bold text-xs text-on-surface">${tipo}</span>
                 </div>
-                <div class="flex-1 min-w-0 px-3 border-l border-surface-border h-full flex flex-col justify-center">
-                    ${createCustomDropdownHtml("input-nombre-tecnico", `NOMBRE DEL TÉCNICO ${tipo === 'T1' ? '1' : '2'}`, "")}
+                
+                <div class="flex-1 min-w-0 px-3 border-l border-surface-border flex flex-col gap-2">
+                    <!-- Campo Nombre del Técnico -->
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Nombre del Técnico ${tipo === 'T1' ? '1' : '2'}</label>
+                        ${createCustomDropdownHtml("input-nombre-tecnico", `SELECCIONE O DIGITE TÉCNICO ${tipo === 'T1' ? '1' : '2'}`, "")}
+                    </div>
+        
+                    <!-- NUEVO CAMPO: Usuario del Técnico -->
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Usuario del Técnico ${tipo === 'T1' ? '1' : '2'}</label>
+                        <input type="text" class="input-usuario-tecnico w-full h-[40px] bg-surface px-3 rounded-lg text-on-surface font-semibold text-xs placeholder:text-on-surface-variant/50 border border-surface-border outline-none focus:ring-2 focus:ring-primary uppercase" placeholder="USUARIO ${tipo === 'T1' ? '1' : '2'}" />
+                    </div>
+        
                     ${opcionRapidaHtml}
                 </div>
-                <button type="button" onclick="removeTecnicoRow(this)" class="w-10 h-10 rounded-full hover:bg-error/10 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors shrink-0">
-                    <span class="material-symbols-outlined text-[20px]">close</span>
+        
+                <button type="button" onclick="removeTecnicoRow(this)" class="w-8 h-8 rounded-full hover:bg-error/10 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors shrink-0 mt-2">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
                 </button>
             `;
         
@@ -579,12 +591,19 @@
         function marcarRutaSinT2(btnOpcion) {
             const row = btnOpcion.closest(".tecnico-row");
             const inputTecnico = row.querySelector(".input-nombre-tecnico");
+            const inputUsuarioTecnico = row.querySelector(".input-usuario-tecnico");
         
-            // Si ya está marcado, permite desmarcarlo para volver a buscar
             if (inputTecnico.value === "RUTA SIN TÉCNICO 2") {
                 inputTecnico.value = "";
                 inputTecnico.readOnly = false;
                 inputTecnico.classList.remove("bg-surface-container-high", "cursor-not-allowed");
+        
+                if (inputUsuarioTecnico) {
+                    inputUsuarioTecnico.value = "";
+                    inputUsuarioTecnico.readOnly = false;
+                    inputUsuarioTecnico.classList.remove("bg-surface-container-high", "cursor-not-allowed");
+                }
+        
                 btnOpcion.innerHTML = `
                     <span class="material-symbols-outlined text-[14px]">block</span>
                     MARCAR COMO "RUTA SIN T2"
@@ -592,12 +611,17 @@
                 btnOpcion.classList.remove("bg-gray-200", "text-gray-700");
                 btnOpcion.classList.add("bg-primary/10", "text-primary");
             } else {
-                // Asignar el valor automático y bloquear el campo
                 inputTecnico.value = "RUTA SIN TÉCNICO 2";
                 inputTecnico.readOnly = true;
-                inputTecnico.classList.remove("border-red-500", "bg-red-50"); // Limpiar alertas si existían
+                inputTecnico.classList.remove("border-red-500", "bg-red-50");
                 inputTecnico.classList.add("bg-surface-container-high", "cursor-not-allowed");
-                
+        
+                if (inputUsuarioTecnico) {
+                    inputUsuarioTecnico.value = "N/A";
+                    inputUsuarioTecnico.readOnly = true;
+                    inputUsuarioTecnico.classList.add("bg-surface-container-high", "cursor-not-allowed");
+                }
+        
                 btnOpcion.innerHTML = `
                     <span class="material-symbols-outlined text-[14px]">check_circle</span>
                     MARCADO: RUTA SIN T2 (Clic para deshacer)
@@ -669,10 +693,20 @@
                         return;
                     }
         
-                    let integrantes = [
-                        { nombre: valT1, cargo: "T1" },
-                        { nombre: valT2, cargo: "T2" }
-                    ];
+                    let integrantes = [];
+                        card.querySelectorAll(".tecnico-row").forEach(tRow => {
+                            const nombreTec = tRow.querySelector(".input-nombre-tecnico") ? tRow.querySelector(".input-nombre-tecnico").value.trim() : "";
+                            const usuarioTec = tRow.querySelector(".input-usuario-tecnico") ? tRow.querySelector(".input-usuario-tecnico").value.trim().toLowerCase() : "";
+                            const cargoTec = tRow.dataset.tipo;
+            
+                            if (nombreTec) {
+                                integrantes.push({ 
+                                    nombre: nombreTec, 
+                                    usuario: usuarioTec, 
+                                    cargo: cargoTec 
+                                });
+                            }
+                        });
         
                     payload.push({ sede, coordinador, fechaHora, placa, usuario, integrantes });
                 });
