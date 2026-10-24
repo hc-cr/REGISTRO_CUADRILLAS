@@ -242,8 +242,9 @@
             } else if (tipoNorm === 'T2') {
                 return cargoNorm.includes("TECNICO 2") || cargoNorm.includes("TECNICO2") || cargoNorm.includes("T2");
             } else if (tipoNorm === 'USUARIO') {
-                // Cargo único "TECNICO 1 / COORDINADOR" (ambos términos en el mismo cargo)
-                return cargoNorm.includes("COORDINADOR") && (cargoNorm.includes("TECNICO 1") || cargoNorm.includes("TECNICO1"));
+                // Cargo "USUARIO", o el cargo combinado anterior "TECNICO 1 / COORDINADOR"
+                return cargoNorm.includes("USUARIO") ||
+                    (cargoNorm.includes("COORDINADOR") && (cargoNorm.includes("TECNICO 1") || cargoNorm.includes("TECNICO1")));
             }
             return false;
         }
@@ -364,18 +365,11 @@
                     ` : ''}
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-on-surface-variant">FECHA DE TRABAJO EN CAMPO</label>
-                        <div class="relative w-full">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
-                            <input class="input-fecha w-full h-[48px] bg-surface pl-10 pr-4 rounded-lg text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" type="date" value="${localDateISO()}" required>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-on-surface-variant">PLACA DEL VEHÍCULO</label>
-                        ${createCustomDropdownHtml("input-placa", "ABC-1234", "local_shipping", true)}
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-on-surface-variant">FECHA DE TRABAJO EN CAMPO</label>
+                    <div class="relative w-full">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+                        <input class="input-fecha w-full h-[48px] bg-surface pl-10 pr-4 rounded-lg text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" type="date" value="${localDateISO()}" required>
                     </div>
                 </div>
 
@@ -383,7 +377,7 @@
 
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-on-surface-variant">TÉCNICOS DE LA CUADRILLA</label>
+                        <label class="text-xs font-bold text-on-surface-variant">TÉCNICO 1, TÉCNICO 2 Y USUARIO (OBLIGATORIOS)</label>
                         <span class="badge-asignados text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">0 ASIGNADOS</span>
                     </div>
 
@@ -405,6 +399,13 @@
                             <span class="text-sm font-bold group-hover:text-primary transition-colors">AGREGAR USUARIO</span>
                         </button>
                     </div>
+                </div>
+
+                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-on-surface-variant">PLACA DEL VEHÍCULO</label>
+                    ${createCustomDropdownHtml("input-placa", "ABC-1234", "local_shipping", true)}
                 </div>
             `;
 
@@ -550,7 +551,7 @@
                 <div class="flex-1 min-w-0 px-3 border-l border-surface-border flex flex-col gap-2">
                     <div>
                         <label class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">${labelText}</label>
-                        ${createCustomDropdownHtml("input-dropdown-persona " + (esUsuario ? "input-usuario" : "input-nombre-tecnico"), placeholder, "", false, !esUsuario)}
+                        ${createCustomDropdownHtml("input-dropdown-persona " + (esUsuario ? "input-usuario" : "input-nombre-tecnico"), placeholder, "", false, true)}
                     </div>
                     ${opcionRapidaHtml}
                 </div>
@@ -659,6 +660,20 @@
                         errores = true;
                         if (rowT2) rowT2.querySelector(".input-nombre-tecnico").classList.add("border-2", "border-red-500", "bg-red-50");
                         alert(`Cuadrilla #${index + 1}: Debe agregar el TÉCNICO 2 y seleccionar un nombre o 'RUTA SIN TÉCNICO 2'.`);
+                        return;
+                    }
+
+                    if (!usuario) {
+                        errores = true;
+                        if (usuarioInput) usuarioInput.classList.add("border-2", "border-red-500", "bg-red-50");
+                        alert(`Cuadrilla #${index + 1}: Debe agregar el USUARIO (seleccione o digite el nombre).`);
+                        return;
+                    }
+
+                    if (!placa.trim()) {
+                        errores = true;
+                        card.querySelector(".input-placa").classList.add("border-2", "border-red-500", "bg-red-50");
+                        alert(`Cuadrilla #${index + 1}: Debe indicar la PLACA DEL VEHÍCULO.`);
                         return;
                     }
 
