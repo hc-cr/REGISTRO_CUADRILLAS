@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de Cuadrillas</title>
+<style>
+  :root {
+    --bg: #f7f9fb; --card: #ffffff; --text: #191c1e; --muted: #727784; --border: #e2e8f0;
+    --primary: #003f87; --primary-soft: rgba(0,63,135,.10); --danger: #ba1a1a;
+    --today: #003f87; --on-today: #ffffff; --ok: #1b7f4b; --warn: #b26a00; --bad: #ba1a1a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1b1f; --card: #26262b; --text: #e6e6ea; --muted: #9a9aa5; --border: #38383f;
+      --primary: #acc7ff; --primary-soft: rgba(172,199,255,.14); --danger: #ffb4ab;
+      --today: #c77dff; --on-today: #1b1b1f; --ok: #6fd9a0; --warn: #ffc56b; --bad: #ffb4ab;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .hidden { display: none !important; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 48px; }
+
+  /* login */
+  .login { max-width: 360px; margin: 12vh auto 0; padding: 0 16px; }
+  .login .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .login h1 { margin: 0 0 4px; font-size: 20px; }
+  .login p { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+  .err { color: var(--danger); font-size: 13px; min-height: 18px; margin: 4px 0 8px; }
+
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 0 10px;
+    border-bottom: 1px solid var(--border); }
+  .top { display: flex; align-items: center; gap: 8px; }
+  .top h1 { flex: 1; margin: 0; font-size: 22px; font-weight: 600; text-transform: capitalize; text-align: center; }
+  .icon-btn { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent;
+    color: var(--text); font-size: 20px; cursor: pointer; }
+  .icon-btn:hover { background: var(--primary-soft); }
+  .icon-btn.spin { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .who { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .who b { color: var(--text); }
+  .who .sp { flex: 1; }
+  .link { background: none; border: 0; color: var(--primary); font-weight: 700; font-size: 12px; cursor: pointer; padding: 4px; }
+  .filters { display: flex; gap: 8px; margin-top: 8px; }
+  .filters select, .filters button { height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); padding: 0 10px; font-size: 13px; }
+  .filters select { flex: 1; }
+  .filters button { cursor: pointer; font-weight: 600; }
+  .stats { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  .day { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .day-head { width: 52px; flex-shrink: 0; text-align: center; cursor: pointer; }
+  .dow { font-size: 12px; color: var(--muted); }
+  .dnum { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    margin-top: 2px; border-radius: 50%; font-size: 18px; font-weight: 700; }
+  .day.today .dnum { background: var(--today); color: var(--on-today); }
+  .day.today .dow { color: var(--today); }
+  .day-body { flex: 1; min-width: 0; }
+  .day-summary { cursor: pointer; padding: 4px 0; }
+  .day-summary .t { font-size: 16px; color: var(--muted); }
+  .day-summary .t.has { color: var(--text); font-weight: 600; }
+  .day-summary .s { font-size: 13px; color: var(--muted); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    background: var(--primary-soft); color: var(--primary); margin-left: 6px; vertical-align: middle; }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .card-head { cursor: pointer; }
+  .card h3 { margin: 0 0 6px; font-size: 14px; font-weight: 700; color: var(--primary); }
+  .row { display: flex; gap: 10px; font-size: 13px; padding: 3px 0; align-items: center; }
+  .row .k { width: 42%; max-width: 180px; font-weight: 700; flex-shrink: 0; }
+  .row .v { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .row .v.empty { color: var(--muted); }
+  .detail { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .sec { font-size: 11px; font-weight: 700; color: var(--muted); margin: 12px 0 4px; }
+  .pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); }
+  .pill.ok { color: var(--ok); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); }
+  .asis { display: flex; flex-direction: column; gap: 2px; }
+  .asis .who2 { font-size: 11px; color: var(--muted); }
+  select.sel, .field input, .field select { height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); padding: 0 8px; font-size: 13px; width: 100%; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn { height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-weight: 700; font-size: 12px; cursor: pointer; }
+  .btn.primary { background: var(--primary); color: var(--bg); border-color: var(--primary); }
+  .btn.full { width: 100%; height: 44px; font-size: 14px; }
+  .btn:disabled { opacity: .5; }
+  .field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .field label { font-size: 10px; font-weight: 700; color: var(--muted); }
+  .field input { height: 40px; font-size: 14px; text-transform: uppercase; }
+  .field input[type=date], .field input[type=password], .field input[inputmode] { text-transform: none; }
+  .field input[type=checkbox] { width: 20px; height: 20px; }
+  .cb { position: relative; }
+  .cbm { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 200px; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; z-index: 30;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,.2); touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  .cb.open .cbm { display: block; }
+  .cbi { padding: 10px 12px; font-size: 13px; font-weight: 500; text-transform: uppercase; cursor: pointer;
+    border-bottom: 1px solid var(--border); user-select: none; }
+  .cbi:last-child { border-bottom: 0; }
+  .cbi:hover, .cbi:active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+  .cbn { padding: 10px 12px; font-size: 12px; font-style: italic; color: var(--muted); }
+  .hist { margin-top: 8px; font-size: 12px; }
+  .hist div { padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .hist .m { color: var(--muted); }
+  .empty-state, .errbox { text-align: center; padding: 40px 0; color: var(--muted); }
+  .errbox { color: var(--danger); }
+  .urow { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .urow .n { flex: 1; min-width: 0; } .urow .n small { display: block; color: var(--muted); }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text);
+    color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0;
+    pointer-events: none; transition: opacity .2s; z-index: 50; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login hidden" id="loginView">
+  <div class="box">
+    <h1>Panel de Cuadrillas</h1>
+    <p>Ingresa con tu DNI y tu PIN.</p>
+    <div class="field"><label>DNI</label><input id="loginDni" inputmode="numeric" maxlength="8" autocomplete="username"></div>
+    <div class="field"><label>PIN</label><input id="loginPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password"></div>
+    <div class="err" id="loginErr"></div>
+    <button class="btn primary full" id="loginBtn">INGRESAR</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap hidden" id="appView">
+  <header>
+    <div class="who">
+      <span><b id="whoName">--</b> · <span id="whoRol"></span><span id="whoSede"></span></span>
+      <span class="sp"></span>
+      <button class="link hidden" id="btnUsuarios">USUARIOS</button>
+      <button class="link" id="btnSalir">SALIR</button>
+    </div>
+    <div class="top" id="monthBar">
+      <button class="icon-btn" id="prev" title="Mes anterior">&#8249;</button>
+      <h1 id="title">--</h1>
+      <button class="icon-btn" id="next" title="Mes siguiente">&#8250;</button>
+      <button class="icon-btn" id="refresh" title="Actualizar">&#10227;</button>
+    </div>
+    <div class="filters" id="filterBar">
+      <select id="sedeFilter"><option value="">TODAS LAS SEDES</option></select>
+      <button id="today">HOY</button>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div id="list"></div>
+  <div id="usersView" class="hidden"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// Misma URL de la web app que usa el formulario (index.html)
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz66zCFtkOvCNZQGNHyll7DdS0d-xDw0p3NvZ74UZUggEPPwiaPtZAcgZ58w9BSa4BXsg/exec";
+
+var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+var ROLES = ["COORDINADOR","SUPERVISOR","JEFE DE OPERACIONES"];
+var CAMPOS_FORM = [
+  ["fecha","FECHA EN CAMPO","date"], ["sede","SEDE DE OPERACIÓN"], ["coordinador","COORDINADOR"],
+  ["t1","TECNICO 1"], ["t2","TECNICO 2"], ["usuario","USUARIO SISTEMA"], ["placa","PLACA VEHICULO"]
+];
+
+var state = { token: "", user: null, year: 0, month: 0, today: "", rows: [], estados: [], sede: "",
+  openDays: {}, openCards: {}, editing: null, history: {}, maestros: null, busy: false, view: "agenda", users: [], editUser: null };
+
+function $(id) { return document.getElementById(id); }
+function pad(n) { return ("0" + n).slice(-2); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+  return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
+function fmtFecha(iso) { var p = iso.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso; }
+function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(function() { t.classList.remove("show"); }, 2800); }
+function msg(err) { return String((err && err.message) || err).replace(/^Error:\s*/, ""); }
+
+// Llama a una función del servidor pasando siempre el token
+// Llamada al Apps Script por POST (text/plain evita el preflight de CORS, igual que el formulario)
+function callServer(fn, args) {
+  return fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "panel", fn: fn, args: args || [] })
+  })
+  .then(function(r) { if (!r.ok) throw new Error("Error de conexión (" + r.status + ")"); return r.json(); })
+  .then(function(res) { if (!res.ok) throw new Error(res.error || "Error del servidor"); return res.data; });
+}
+
+// Misma firma de antes: añade siempre el token como primer argumento
+function api(fn, args, ok, fail) {
+  callServer(fn, [state.token].concat(args || [])).then(ok).catch(function(err) {
+    if (/SESION/.test(msg(err))) { logout("Tu sesión venció. Ingresa de nuevo."); return; }
+    if (fail) fail(err); else toast(msg(err));
+  });
+}
+
+/* ---------- sesión ---------- */
+function saveToken(t) { try { t ? localStorage.setItem("panelToken", t) : localStorage.removeItem("panelToken"); } catch (e) {} }
+function readToken() { try { return localStorage.getItem("panelToken") || ""; } catch (e) { return ""; } }
+
+function showLogin(text) {
+  $("appView").classList.add("hidden"); $("loginView").classList.remove("hidden");
+  $("loginErr").textContent = text || ""; $("loginPin").value = "";
+}
+
+function logout(text) {
+  state.token = ""; state.user = null; saveToken("");
+  state.rows = []; state.editing = null; state.history = {}; state.maestros = null;
+  showLogin(text);
+}
+
+function enterApp(user) {
+  state.user = user;
+  $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden");
+  $("whoName").textContent = user.nombre; $("whoRol").textContent = user.rol;
+  $("whoSede").textContent = user.rol === "COORDINADOR" && user.sede ? " · " + user.sede : "";
+  $("btnUsuarios").classList.toggle("hidden", !user.puedeUsuarios);
+  setView("agenda");
+  load();
+}
+
+$("loginBtn").onclick = doLogin;
+$("loginPin").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
+function doLogin() {
+  var dni = $("loginDni").value.trim(), pin = $("loginPin").value.trim();
+  if (!dni || !pin) { $("loginErr").textContent = "Ingresa DNI y PIN."; return; }
+  $("loginBtn").disabled = true; $("loginErr").textContent = "";
+  callServer("login", [dni, pin])
+    .then(function(res) {
+      $("loginBtn").disabled = false; state.token = res.token; saveToken(res.token); enterApp(res);
+    })
+    .catch(function(err) { $("loginBtn").disabled = false; $("loginErr").textContent = msg(err); });
+}
+$("btnSalir").onclick = function() { logout(""); };
+
+/* ---------- agenda ---------- */
+function load(silent) {
+  if (state.busy) return;
+  if (!state.year) { var n = new Date(); state.year = n.getFullYear(); state.month = n.getMonth() + 1; }
+  state.busy = true; $("refresh").classList.add("spin");
+  var y = state.year, m = state.month;
+  api("getPanelData", [y, m], function(res) {
+    state.busy = false; $("refresh").classList.remove("spin");
+    if (y !== state.year || m !== state.month) return load(true);
+    state.rows = res.rows; state.today = res.today; state.estados = res.estados; state.user = res.user;
+    if (!state.openInit) { state.openDays[res.today] = true; state.openInit = true; }
+    fillSedes(); if (state.view === "agenda") render();
+  }, function(err) {
+    state.busy = false; $("refresh").classList.remove("spin");
+    if (!silent) $("list").innerHTML = '<div class="errbox">No se pudo cargar: ' + esc(msg(err)) + '</div>';
+  });
+}
+
+function fillSedes() {
+  var sel = $("sedeFilter"), cur = state.sede;
+  var sedes = Array.from(new Set(state.rows.map(function(r) { return r.sede; }).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">TODAS LAS SEDES</option>' +
+    sedes.map(function(s) { return '<option value="' + esc(s) + '">' + esc(s) + '</option>'; }).join("");
+  sel.value = sedes.indexOf(cur) >= 0 ? cur : ""; state.sede = sel.value;
+  sel.classList.toggle("hidden", state.user && state.user.rol === "COORDINADOR");
+}
+
+function render() {
+  $("title").textContent = MESES[state.month - 1] + " " + state.year;
+  var rows = state.rows.filter(function(r) { return !state.sede || r.sede === state.sede; });
+  var byDay = {};
+  rows.forEach(function(r) { (byDay[r.fecha] = byDay[r.fecha] || []).push(r); });
+  $("stats").textContent = rows.length + " CUADRILLA(S) EN EL MES · " + Object.keys(byDay).length + " DÍA(S) CON REGISTRO";
+
+  var days = new Date(state.year, state.month, 0).getDate(), html = "";
+  for (var d = 1; d <= days; d++) {
+    var key = state.year + "-" + pad(state.month) + "-" + pad(d);
+    var list = (byDay[key] || []).sort(function(a, b) { return (+a.numero || 0) - (+b.numero || 0); });
+    var open = !!state.openDays[key];
+    var dow = DIAS[new Date(state.year, state.month - 1, d).getDay()];
+    html += '<div class="day' + (key === state.today ? " today" : "") + '" id="d-' + key + '">' +
+      '<div class="day-head" data-day="' + key + '"><div class="dow">' + dow + '</div><div class="dnum">' + d + '</div></div>' +
+      '<div class="day-body"><div class="day-summary" data-day="' + key + '">' +
+      (list.length
+        ? '<div class="t has">' + list.length + ' cuadrilla' + (list.length > 1 ? "s" : "") + ' registrada' + (list.length > 1 ? "s" : "") + '<span class="badge">' + (open ? "OCULTAR" : "VER") + '</span></div>'
+        : '<div class="t">No hay nada registrado</div><div class="s">' + (open ? "Aún no se ha registrado ninguna cuadrilla" : "Tocar para ver") + '</div>') +
+      '</div>' + (open && list.length ? '<div class="cards">' + list.map(cardHtml).join("") + '</div>' : "") +
+      '</div></div>';
+  }
+  $("list").innerHTML = html;
+}
+
+function row(k, v) {
+  return '<div class="row"><div class="k">' + k + '</div><div class="v' + (v ? "" : " empty") + '">' + (v ? esc(v) : "—") + '</div></div>';
+}
+
+function personas(r) {
+  var p = [["COORDINADOR", "COORDINADOR", r.coordinador], ["T1", "TECNICO 1", r.t1]];
+  if (r.t2 && !/^RUTA SIN/.test(r.t2)) p.push(["T2", "TECNICO 2", r.t2]);
+  p.push(["USUARIO", "USUARIO SISTEMA", r.usuario]);
+  return p.filter(function(x) { return x[2]; });
+}
+
+function estadoClass(e) { return e === "ASISTIÓ" ? "ok" : e === "TARDE" || e === "PERMISO" ? "warn" : e === "FALTÓ" ? "bad" : ""; }
+
+function asistenciaHtml(r) {
+  var can = state.user && state.user.puedeAsistencia;
+  if (!can) return "";   // el COORDINADOR no ve la asistencia
+  var h = '<div class="sec">ASISTENCIA</div>';
+  personas(r).forEach(function(p) {
+    var a = r.asistencia[p[0]] || {};
+    h += '<div class="row"><div class="k">' + esc(p[2]) + '<div class="who2" style="font-weight:400;color:var(--muted);font-size:11px">' + p[1] + '</div></div><div class="v asis">';
+    if (can) {
+      h += '<select class="sel" data-asis="' + p[0] + '" data-id="' + esc(r.id) + '"><option value="">SIN MARCAR</option>' +
+        state.estados.map(function(e) { return '<option' + (a.estado === e ? " selected" : "") + '>' + e + '</option>'; }).join("") + '</select>';
+    } else {
+      h += a.estado ? '<span class="pill ' + estadoClass(a.estado) + '">' + esc(a.estado) + '</span>' : '<span class="empty" style="color:var(--muted)">SIN MARCAR</span>';
+    }
+    if (a.estado && a.por) h += '<span class="who2">' + esc(a.por) + ' · ' + esc(a.cuando) + '</span>';
+    h += '</div></div>';
+  });
+  return h;
+}
+
+function cardHtml(r) {
+  var open = !!state.openCards[r.id];
+  var h = '<div class="card" data-id="' + esc(r.id) + '"><div class="card-head" data-card="' + esc(r.id) + '">' +
+    '<h3>CUADRILLA #' + esc(r.numero || "") + '</h3>';
+  if (!open) return h + row("TECNICO 1", r.t1) + row("TECNICO 2", r.t2) + row("USUARIO SISTEMA", r.usuario) + '</div></div>';
+  h += '</div><div class="detail">';
+  if (state.editing === r.id) {
+    CAMPOS_FORM.forEach(function(f) {
+      var lock = f[0] === "sede" && state.user.rol === "COORDINADOR";
+      var val = esc(r[f[0]]);
+      h += '<div class="field"><label>' + f[1] + '</label>';
+      if (f[2] === "date") {
+        h += '<input data-key="' + f[0] + '" type="date" value="' + val + '">';
+      } else {
+        h += '<div class="cb"><input data-key="' + f[0] + '" data-cb="1" type="text" autocomplete="off" value="' + val + '"' + (lock ? " disabled" : "") + '>' +
+          '<div class="cbm"></div></div>';
+      }
+      h += '</div>';
+    });
+    h += '<div class="actions"><button class="btn primary" data-act="save" data-id="' + esc(r.id) + '">GUARDAR</button>' +
+      '<button class="btn" data-act="cancel">CANCELAR</button></div>';
+  } else {
+    CAMPOS_FORM.forEach(function(f) { h += row(f[1], f[0] === "fecha" ? fmtFecha(r.fecha) : r[f[0]]); });
+    h += row("REGISTRADO", r.registro);
+    h += asistenciaHtml(r);
+    h += '<div class="actions">' +
+      (state.user.puedeEditar ? '<button class="btn primary" data-act="edit" data-id="' + esc(r.id) + '">EDITAR</button>' : '') +
+      '<button class="btn" data-act="hist" data-id="' + esc(r.id) + '">' + (state.history[r.id] ? "OCULTAR HISTORIAL" : "HISTORIAL") + '</button>' +
+      '<button class="btn" data-act="close" data-id="' + esc(r.id) + '">CERRAR</button></div>';
+    var hist = state.history[r.id];
+    if (hist) {
+      h += '<div class="hist">' + hist.map(function(x) {
+        return '<div><b>' + esc(x.campo) + '</b>: ' + esc(x.anterior || "—") + ' → ' + esc(x.nuevo || "—") +
+          '<div class="m">' + esc(x.editor) + ' · ' + esc(x.cuando) + '</div></div>';
+      }).join("") +
+        '<div><b>REGISTRO INICIAL</b><div class="m">' + esc(r.registro) + (hist.length ? "" : " · sin modificaciones posteriores") + '</div></div></div>';
+    }
+  }
+  return h + '</div></div>';
+}
+
+document.addEventListener("click", function(e) {
+  if (state.view !== "agenda") return;
+  var btn = e.target.closest("[data-act]");
+  if (btn) return onAction(btn);
+  if (e.target.closest("select")) return;
+  var day = e.target.closest("[data-day]");
+  if (day) { var k = day.dataset.day; state.openDays[k] = !state.openDays[k]; return render(); }
+  var card = e.target.closest("[data-card]");
+  if (card) { var id = card.dataset.card; state.openCards[id] = !state.openCards[id]; if (state.editing === id) state.editing = null; render(); }
+});
+
+document.addEventListener("change", function(e) {
+  var sel = e.target.closest("[data-asis]");
+  if (!sel) return;
+  var id = sel.dataset.id, cargo = sel.dataset.asis, estado = sel.value;
+  sel.disabled = true;
+  api("setAsistencia", [id, cargo, estado], function(res) {
+    var r = state.rows.filter(function(x) { return x.id === id; })[0];
+    if (r) { if (estado) r.asistencia[cargo] = { estado: estado, por: res.por || state.user.nombre, cuando: res.cuando || "" }; else delete r.asistencia[cargo]; }
+    delete state.history[id]; toast(estado ? "Asistencia: " + estado : "Asistencia quitada"); render();
+  }, function(err) { toast(msg(err)); render(); });
+});
+
+function onAction(btn) {
+  var id = btn.dataset.id, act = btn.dataset.act;
+  if (act === "edit") {
+    var go = function() { state.editing = id; render(); };
+    if (state.maestros) return go();
+    btn.disabled = true; btn.textContent = "CARGANDO…";
+    api("getMaestros", [], function(m) { state.maestros = m; go(); },
+      function(err) { btn.disabled = false; btn.textContent = "EDITAR"; toast(msg(err)); });
+  }
+  else if (act === "cancel") { state.editing = null; render(); }
+  else if (act === "close") { state.openCards[id] = false; render(); }
+  else if (act === "hist") {
+    if (state.history[id]) { delete state.history[id]; render(); return; }   // ya abierto: se oculta
+    btn.disabled = true;
+    api("getHistorial", [id], function(h) { state.history[id] = h; render(); }, function(err) { btn.disabled = false; toast(msg(err)); });
+  }
+  else if (act === "save") {
+    var card = btn.closest(".card"), cambios = {};
+    card.querySelectorAll("input[data-key]:not([disabled])").forEach(function(i) { cambios[i.dataset.key] = i.value; });
+    btn.disabled = true; btn.textContent = "GUARDANDO…";
+    api("updateRegistro", [id, cambios], function(res) {
+      state.editing = null; delete state.history[id];
+      toast(res.cambios ? "Guardado (" + res.cambios + " cambio(s) registrado(s))" : "Sin cambios");
+      state.busy = false; load(true);
+    }, function(err) { btn.disabled = false; btn.textContent = "GUARDAR"; toast(msg(err)); });
+  }
+}
+
+/* ---------- desplegables del modo edición (igual que el formulario) ---------- */
+function norm(t) { return String(t || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); }
+
+function cargoOk(cargoDB, tipo) {
+  var c = norm(cargoDB);
+  if (tipo === "COORDINADOR") return c.indexOf("COORDINADOR") >= 0;
+  if (tipo === "T1") return c.indexOf("TECNICO 1") >= 0 || c.indexOf("TECNICO1") >= 0 || c.indexOf("T1") >= 0;
+  if (tipo === "T2") return c.indexOf("TECNICO 2") >= 0 || c.indexOf("TECNICO2") >= 0 || c.indexOf("T2") >= 0;
+  if (tipo === "USUARIO") return c.indexOf("USUARIO") >= 0 ||
+    (c.indexOf("COORDINADOR") >= 0 && (c.indexOf("TECNICO 1") >= 0 || c.indexOf("TECNICO1") >= 0));
+  return false;
+}
+
+// Opciones según el campo y la sede escrita/elegida en la misma ficha
+function opcionesCampo(key, card) {
+  var m = state.maestros || { sedes: [], placas: [], personal: [] };
+  if (key === "sede") return m.sedes;
+  if (key === "placa") return m.placas;
+  var sedeInput = card.querySelector('[data-key="sede"]');
+  var sede = norm(sedeInput ? sedeInput.value : "");
+  var tipo = { coordinador: "COORDINADOR", t1: "T1", t2: "T2", usuario: "USUARIO" }[key];
+  var lista = m.personal.filter(function(p) { return (!sede || norm(p.sede) === sede) && cargoOk(p.cargo, tipo); })
+    .map(function(p) { return p.nombre; });
+  if (key === "t2") lista.push("RUTA SIN TÉCNICO 2");
+  return Array.from(new Set(lista));
+}
+
+function cerrarCombos() { document.querySelectorAll(".cb.open").forEach(function(c) { c.classList.remove("open"); }); }
+
+function pintarCombo(input) {
+  var cb = input.closest(".cb"), menu = cb.querySelector(".cbm");
+  var q = norm(input.value);
+  var ops = opcionesCampo(input.dataset.key, input.closest(".card")).filter(function(o) { return norm(o).indexOf(q) >= 0; });
+  menu.innerHTML = ops.length
+    ? ops.map(function(o) { return '<div class="cbi" data-v="' + esc(o) + '">' + esc(o) + '</div>'; }).join("")
+    : '<div class="cbn">SIN COINCIDENCIAS (SE CONSERVARÁ EL TEXTO ESCRITO)</div>';
+}
+
+function abrirCombo(input) {
+  if (input.disabled) return;
+  cerrarCombos(); pintarCombo(input); input.closest(".cb").classList.add("open");
+}
+
+document.addEventListener("focusin", function(e) { if (e.target.matches && e.target.matches("input[data-cb]")) abrirCombo(e.target); });
+document.addEventListener("click", function(e) { if (e.target.matches && e.target.matches("input[data-cb]")) abrirCombo(e.target); });
+document.addEventListener("input", function(e) {
+  if (e.target.matches && e.target.matches("input[data-cb]")) {
+    e.target.value = e.target.value.toUpperCase();
+    e.target.closest(".cb").classList.add("open"); pintarCombo(e.target);
+  }
+});
+
+// Selección con control de scroll vs toque (móvil)
+var cbMoved = false, cbY = 0;
+document.addEventListener("touchstart", function(e) { if (e.target.closest(".cbm")) { cbMoved = false; cbY = e.touches[0].clientY; } }, { passive: true });
+document.addEventListener("touchmove", function(e) { if (e.target.closest(".cbm") && Math.abs(e.touches[0].clientY - cbY) > 6) cbMoved = true; }, { passive: true });
+document.addEventListener("click", function(e) {
+  var item = e.target.closest(".cbi");
+  if (item) {
+    if (cbMoved) { cbMoved = false; return; }
+    var cb = item.closest(".cb");
+    cb.querySelector("input").value = item.dataset.v; cb.classList.remove("open");
+  } else if (!e.target.closest(".cb")) cerrarCombos();
+});
+
+function shiftMonth(delta) {
+  state.month += delta;
+  if (state.month < 1) { state.month = 12; state.year--; }
+  if (state.month > 12) { state.month = 1; state.year++; }
+  state.editing = null; $("list").innerHTML = '<div class="empty-state">Cargando…</div>'; load();
+}
+
+$("prev").onclick = function() { shiftMonth(-1); };
+$("next").onclick = function() { shiftMonth(1); };
+$("refresh").onclick = function() { load(); };
+$("sedeFilter").onchange = function() { state.sede = this.value; render(); };
+$("today").onclick = function() {
+  var p = state.today.split("-"), same = state.year === +p[0] && state.month === +p[1];
+  state.year = +p[0]; state.month = +p[1]; state.openDays[state.today] = true;
+  var go = function() { var el = $("d-" + state.today); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); };
+  if (same) { render(); go(); } else { load(); setTimeout(go, 900); }
+};
+
+/* ---------- usuarios (solo Jefe de Operaciones) ---------- */
+function setView(v) {
+  state.view = v;
+  var agenda = v === "agenda";
+  $("list").classList.toggle("hidden", !agenda); $("monthBar").classList.toggle("hidden", !agenda);
+  $("filterBar").classList.toggle("hidden", !agenda); $("stats").classList.toggle("hidden", !agenda);
+  $("usersView").classList.toggle("hidden", agenda);
+  $("btnUsuarios").textContent = agenda ? "USUARIOS" : "VOLVER A LA AGENDA";
+}
+
+$("btnUsuarios").onclick = function() {
+  if (state.view === "usuarios") { setView("agenda"); render(); return; }
+  setView("usuarios"); $("usersView").innerHTML = '<div class="empty-state">Cargando…</div>';
+  loadUsers();
+};
+
+function loadUsers() {
+  api("listUsuarios", [], function(list) { state.users = list; renderUsers(); });
+}
+
+function renderUsers() {
+  var u = state.editUser;
+  var h = '<div style="padding-top:12px"><div class="sec">' + (u && u.existe ? "EDITAR USUARIO" : "NUEVO USUARIO") + '</div>' +
+    '<div class="field"><label>DNI</label><input id="uDni" inputmode="numeric" maxlength="8" value="' + esc(u ? u.dni : "") + '"' + (u && u.existe ? " disabled" : "") + '></div>' +
+    '<div class="field"><label>NOMBRE COMPLETO</label><input id="uNombre" value="' + esc(u ? u.nombre : "") + '"></div>' +
+    '<div class="field"><label>ROL</label><select id="uRol">' + ROLES.map(function(r) { return '<option' + (u && u.rol === r ? " selected" : "") + '>' + r + '</option>'; }).join("") + '</select></div>' +
+    '<div class="field"><label>SEDE (obligatoria para COORDINADOR)</label><input id="uSede" value="' + esc(u ? u.sede : "") + '"></div>' +
+    '<div class="field"><label>' + (u && u.existe ? "PIN NUEVO (vacío = no cambiar)" : "PIN (4 a 6 dígitos)") + '</label><input id="uPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password">' +
+    '<div><button type="button" class="link" id="uGen">GENERAR PIN ALEATORIO</button></div></div>' +
+    '<div class="field"><label><input type="checkbox" id="uActivo"' + (!u || u.activo ? " checked" : "") + '> ACTIVO</label></div>' +
+    '<div class="actions"><button class="btn primary" id="uSave">GUARDAR</button>' +
+    (u ? '<button class="btn" id="uCancel">CANCELAR</button>' : "") + '</div>' +
+    '<div class="sec" style="margin-top:20px">USUARIOS (' + state.users.length + ')</div>' +
+    (state.users.length ? state.users.map(function(x) {
+      return '<div class="urow"><div class="n"><b>' + esc(x.nombre) + '</b><small>' + esc(x.dni) + ' · ' + esc(x.rol) + (x.sede ? " · " + esc(x.sede) : "") + (x.activo ? "" : " · INACTIVO") + '</small></div>' +
+        '<button class="btn" data-uedit="' + esc(x.dni) + '">EDITAR</button></div>';
+    }).join("") : '<div class="empty-state">Aún no hay usuarios.</div>') + '</div>';
+  $("usersView").innerHTML = h;
+  $("uSave").onclick = saveUser;
+  $("uGen").onclick = function() {
+    var n = new Uint32Array(1); crypto.getRandomValues(n);
+    var pin = String(1000 + (n[0] % 9000));
+    $("uPin").type = "text"; $("uPin").value = pin;
+    toast("PIN generado: " + pin + ". Anótalo y entrégalo; luego no se puede ver.");
+  };
+  if ($("uCancel")) $("uCancel").onclick = function() { state.editUser = null; renderUsers(); };
+  document.querySelectorAll("[data-uedit]").forEach(function(b) {
+    b.onclick = function() {
+      var x = state.users.filter(function(y) { return y.dni === b.dataset.uedit; })[0];
+      state.editUser = Object.assign({ existe: true }, x); renderUsers(); window.scrollTo(0, 0);
+    };
+  });
+}
+
+function saveUser() {
+  var data = {
+    dni: $("uDni").value, nombre: $("uNombre").value, rol: $("uRol").value,
+    sede: $("uSede").value, pin: $("uPin").value, activo: $("uActivo").checked
+  };
+  $("uSave").disabled = true;
+  api("saveUsuario", [data], function() {
+    toast("Usuario guardado"); state.editUser = null; loadUsers();
+  }, function(err) { $("uSave").disabled = false; toast(msg(err)); });
+}
+
+/* ---------- arranque ---------- */
+(function init() {
+  var t = readToken();
+  if (!t) return showLogin("");
+  state.token = t;
+  callServer("getSession", [t])
+    .then(function(user) { enterApp(user); })
+    .catch(function() { logout(""); });
+})();
+
+// Actualización automática cada 60 s (no interrumpe edición ni otra vista)
+setInterval(function() {
+  if (state.token && state.view === "agenda" && !state.editing && !document.hidden) load(true);
+}, 60000);
+</script>
+</body>
+</html>
