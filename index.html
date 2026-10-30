@@ -1,901 +1,833 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Registro de Cuadrillas</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Registro de cuadrillas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #f3f3f0; --surface: #ffffff; --surface-2: #f8f8f6;
+    --line: #e3e3de; --line-strong: #cfcfc9;
+    --ink: #17181a; --ink-2: #4d5056; --ink-3: #686b72;
+    --accent: #0a4aa6; --accent-soft: rgba(10,74,166,.09);
+    --ok-bg: #e2f0e6; --ok-ink: #1b5a35;
+    --warn-bg: #faecd0; --warn-ink: #774800;
+    --bad-bg: #f8dedb; --bad-ink: #86201a;
+    --plate-bg: #ffffff;
+    --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0f0f10; --surface: #181819; --surface-2: #1f1f21;
+      --line: #2a2a2c; --line-strong: #3b3b3e;
+      --ink: #ececed; --ink-2: #b0b0b4; --ink-3: #909095;
+      --accent: #7db0ff; --accent-soft: rgba(125,176,255,.13);
+      --ok-bg: #16301f; --ok-ink: #93d9ab;
+      --warn-bg: #372b10; --warn-ink: #ebc678;
+      --bad-bg: #3b1d1a; --bad-ink: #f4a69e;
+      --plate-bg: #232325;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45;
+    font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: var(--surface); }
+  * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .hidden { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-    <!-- Librerías requeridas para convertir HTML a imagen y empaquetar PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  /* ---------- controles ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px;
+    border: 1px solid var(--line-strong); background: var(--surface); font-weight: 500; font-size: 13px; white-space: nowrap;
+    transition: transform 140ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease); }
+  .btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: .5; pointer-events: none; }
+  .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .btn.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn.text { border-color: transparent; background: transparent; color: var(--accent); padding: 0 8px; }
+  .btn.text:hover { background: var(--accent-soft); }
+  .btn.full { width: 100%; height: 44px; font-size: 14px; }
+  .icon-btn { width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; display: inline-grid; place-items: center; color: var(--ink-2);
+    transition: transform 140ms var(--ease), background-color 150ms var(--ease), color 150ms var(--ease); }
+  .icon-btn:hover { background: var(--accent-soft); color: var(--ink); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (pointer: coarse) { .btn, .icon-btn { min-height: 44px; } .icon-btn { width: 44px; } }
 
-    <style>
-        @layer base {
-            html, body { margin: 0; padding: 0; }
-            body { overscroll-behavior: none; }
-        }
-        ::-webkit-scrollbar { display: none; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .field > label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .field input:not([type=checkbox]), .field select, select.sel { height: 40px; width: 100%; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--ink); padding: 0 12px; font: inherit; font-size: 14px; transition: border-color 150ms var(--ease); }
+  .field input:not([type=checkbox]):hover, .field select:hover { border-color: var(--ink-3); }
+  .field input[data-cb], .field input[data-key]:not([type=date]) { text-transform: uppercase; }
+  .field input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); vertical-align: -3px; margin-right: 6px; }
+  @media (pointer: coarse) { .field input:not([type=checkbox]), .field select { height: 46px; font-size: 16px; } }
 
-        .custom-dropdown-container {
-            position: relative;
-            width: 100%;
-        }
-        .custom-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            background: #ffffff;
-            border: 1px solid #E2E8F0;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            z-index: 50;
-            -webkit-overflow-scrolling: touch;
-        }
-        .custom-dropdown-container.open .custom-dropdown-menu {
-            display: block;
-        }
-        .dropdown-item {
-            padding: 10px 14px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            border-bottom: 1px solid #f2f4f6;
-            color: #191c1e;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:hover, .dropdown-item:active {
-            background-color: #f2f4f6;
-            color: #003f87;
-            font-weight: 700;
-        }
-        .dropdown-no-results {
-            padding: 10px 14px;
-            font-size: 0.75rem;
-            color: #727784;
-            font-style: italic;
-        }
+  /* ---------- acceso ---------- */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+  .login .box { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 28px 24px; }
+  .login .brand { margin-bottom: 20px; }
+  .login p { margin: 0 0 20px; color: var(--ink-2); }
+  .err { color: var(--bad-ink); font-size: 13px; min-height: 20px; margin: 2px 0 10px; }
 
-        .custom-dropdown-menu {
-            touch-action: pan-y;
-            -webkit-overflow-scrolling: touch;
-        }
+  /* ---------- barra superior ---------- */
+  .bar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line);
+    min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand svg.mark { width: 34px; height: 24px; flex-shrink: 0; }
+  .brand .t { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; line-height: 1.2; white-space: nowrap; }
+  .brand .s { display: block; font-size: 12px; color: var(--ink-3); font-weight: 400; }
+  .bar-r { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .who { text-align: right; line-height: 1.25; margin: 0 6px; min-width: 0; }
+  .who b { display: block; font-weight: 500; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who span { font-size: 12px; color: var(--ink-3); }
+  .stamp { font-size: 12px; color: var(--ink-3); margin-right: 2px; white-space: nowrap; }
+  .bar-nav { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
+  .btn.sm { height: 34px; font-size: 13px; padding: 0 12px; text-decoration: none; color: var(--ink); }
+  a.btn { text-decoration: none; color: var(--ink); }
+  .btn.sm.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .noedit { margin: 4px 16px 12px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); font-size: 13px; }
 
-        .dropdown-item {
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-    </style>
+  /* ---------- estructura ---------- */
+  .shell { max-width: 1120px; margin: 0 auto; padding: 20px 16px 64px; display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .side { position: sticky; top: 76px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        "primary-fixed-dim": "#acc7ff",
-                        "surface-container-lowest": "#ffffff",
-                        "technician-t1": "#14b8a6",
-                        "technician-t2": "#f59e0b",
-                        "technician-user": "#6366f1",
-                        "background": "#f7f9fb",
-                        "on-surface": "#191c1e",
-                        "surface-container-low": "#f2f4f6",
-                        "tertiary": "#722b00",
-                        "on-primary-fixed-variant": "#004491",
-                        "secondary-fixed": "#dae2fd",
-                        "on-secondary": "#ffffff",
-                        "outline": "#727784",
-                        "inverse-on-surface": "#eff1f3",
-                        "on-tertiary-fixed": "#351000",
-                        "surface-dim": "#d8dadc",
-                        "secondary-container": "#dae2fd",
-                        "secondary": "#565e74",
-                        "tertiary-fixed-dim": "#ffb694",
-                        "on-surface-variant": "#424752",
-                        "inverse-surface": "#2d3133",
-                        "on-secondary-fixed-variant": "#3f465c",
-                        "error-container": "#ffdad6",
-                        "on-error-container": "#93000a",
-                        "secondary-fixed-dim": "#bec6e0",
-                        "surface-border": "#E2E8F0",
-                        "surface-tint": "#115cb9",
-                        "primary-fixed": "#d7e2ff",
-                        "surface-container-highest": "#e0e3e5",
-                        "surface-variant": "#e0e3e5",
-                        "on-error": "#ffffff",
-                        "outline-variant": "#c2c6d4",
-                        "tertiary-container": "#983c00",
-                        "inverse-primary": "#acc7ff",
-                        "on-tertiary-fixed-variant": "#7b2f00",
-                        "on-primary-container": "#bbd0ff",
-                        "on-secondary-fixed": "#131b2e",
-                        "tertiary-fixed": "#ffdbcc",
-                        "primary-container": "#0056b3",
-                        "surface-container": "#eceef0",
-                        "on-background": "#191c1e",
-                        "text-high-contrast": "#1a1a1a",
-                        "surface": "#f7f9fb",
-                        "surface-container-high": "#e6e8ea",
-                        "surface-bright": "#f7f9fb",
-                        "on-tertiary-container": "#ffc2a7",
-                        "on-primary-fixed": "#001a40",
-                        "on-primary": "#ffffff",
-                        "error": "#ba1a1a",
-                        "on-tertiary": "#ffffff",
-                        "primary": "#003f87"
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.25rem",
-                        lg: "0.5rem",
-                        xl: "0.75rem",
-                        full: "9999px"
-                    },
-                    fontFamily: {
-                        body: ["Inter", "sans-serif"]
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  /* ---------- calendario ---------- */
+  .cal-head { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+  .cal-head h2 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; }
+  .dows, .cells { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .dows div { text-align: center; font-size: 12px; color: var(--ink-3); padding: 4px 0; font-weight: 500; }
+  .cell { position: relative; height: 46px; border: 0; background: transparent; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-size: 14px; color: var(--ink); transition: transform 140ms var(--ease), background-color 150ms var(--ease); }
+  .cell:hover { background: var(--accent-soft); }
+  .cell:active { transform: scale(0.95); }
+  .cell.out { visibility: hidden; pointer-events: none; }
+  .cell.wk { color: var(--ink-3); }
+  .cell.today .n { color: var(--accent); font-weight: 600; box-shadow: 0 0 0 1.5px var(--accent); }
+  .cell .n { min-width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; padding: 0 2px; }
+  .cell.sel { background: var(--ink); color: var(--surface); }
+  .cell.sel.wk { color: var(--surface); }
+  .cell.sel .n { box-shadow: none; color: var(--surface); }
+  .dots { display: flex; gap: 3px; height: 5px; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .cell.sel .dots i { background: var(--surface); }
+  .cal-foot { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+  .cal-foot .sum { font-size: 13px; color: var(--ink-2); }
+  .cal-foot select { height: 38px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 0 10px; font: inherit; }
+
+  /* ---------- detalle del día ---------- */
+  .day-title { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .day-sub { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
+  .meter { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); }
+  .meter .bar-t { flex: 1; max-width: 220px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .meter .bar-t i { display: block; height: 100%; background: var(--accent); transition: width 250ms var(--ease); }
+  .cards { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+  .cards.enter .card { animation: rise 220ms var(--ease) backwards; }
+  .cards.enter .card:nth-child(2) { animation-delay: 40ms; } .cards.enter .card:nth-child(3) { animation-delay: 80ms; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .empty { margin-top: 18px; border: 1px dashed var(--line-strong); border-radius: 10px; padding: 20px 16px; color: var(--ink-2); text-align: center; }
+  .errblock { margin-top: 18px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; }
+  .errblock p { margin: 0; color: var(--ink-2); }
+  .sk { background: var(--line); border-radius: 6px; }
+  .sk-card { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* ---------- tarjeta de cuadrilla ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; position: relative; }
+  .card:focus-within { z-index: 31; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 8px; }
+  .card-top h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .card-top .loc { color: var(--ink-3); font-size: 13px; margin-top: 1px; }
+  .plate { font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: .08em; padding: 3px 10px; border: 1.5px solid var(--ink); border-radius: 6px;
+    background: var(--plate-bg); white-space: nowrap; }
+  .plate.none { border-style: dashed; border-color: var(--line-strong); color: var(--ink-3); font-weight: 400; }
+  .roster { padding: 0 8px 4px; }
+  .person { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 6px 8px; border: 0; background: transparent; border-radius: 8px; text-align: left; }
+  button.person { transition: background-color 150ms var(--ease), transform 140ms var(--ease); }
+  button.person:hover { background: var(--surface-2); }
+  button.person:active { transform: scale(0.985); }
+  .av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; flex-shrink: 0;
+    background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 45% 26%); }
+  @media (prefers-color-scheme: dark) { .av { background: hsl(var(--h) 28% 22%); color: hsl(var(--h) 55% 80%); } }
+  .av.ghost { background: transparent; border: 1px dashed var(--line-strong); color: var(--ink-3); }
+  .person .nm { flex: 1; min-width: 0; }
+  .person .nm b { display: block; font-weight: 500; font-size: 14px; overflow-wrap: anywhere; }
+  .person .nm b.muted { color: var(--ink-3); font-weight: 400; font-style: italic; }
+  .person .nm span { font-size: 12px; color: var(--ink-3); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 12px; font-weight: 500; background: var(--surface-2); color: var(--ink-3); border: 1px solid var(--line); white-space: nowrap; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
+  .pill.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+  .pill.bad { background: var(--bad-bg); color: var(--bad-ink); border-color: transparent; }
+  .mark-panel { margin: 0 8px 6px 52px; padding: 10px 12px 12px; background: var(--surface-2); border-radius: 8px; animation: rise 160ms var(--ease) backwards; }
+  .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .chip { height: 40px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 13px; font-weight: 500;
+    transition: transform 140ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease); }
+  .chip:hover { border-color: var(--ink-3); }
+  .chip:active { transform: scale(0.96); }
+  .chip.on.ok { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
+  .chip.on.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+  .chip.on.bad { background: var(--bad-bg); color: var(--bad-ink); border-color: transparent; }
+  .mark-meta { margin-top: 8px; font-size: 12px; color: var(--ink-3); display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  @media (max-width: 480px) { .chips { grid-template-columns: repeat(2, 1fr); } .chip { height: 44px; } .mark-panel { margin-left: 8px; } }
+
+  .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px 12px; }
+  .detail { margin: 0 16px; padding: 12px 0 4px; border-top: 1px solid var(--line); }
+  .kv { display: grid; grid-template-columns: 132px 1fr; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .kv:last-of-type { border-bottom: 0; }
+  .kv dt { color: var(--ink-3); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+  .kv dd.mono { font-family: var(--mono); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 12px; }
+  .hist { margin: 0 16px 12px; border-top: 1px solid var(--line); }
+  .hist .h { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .hist .h:last-child { border-bottom: 0; }
+  .hist .m { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .hist .old { color: var(--ink-3); text-decoration: line-through; }
+  .editbox { padding: 12px 16px 4px; border-top: 1px solid var(--line); margin-top: 4px; }
+  .fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  @media (max-width: 700px) { .fgrid { grid-template-columns: 1fr; } }
+
+  /* desplegables del modo edición */
+  .cb { position: relative; }
+  .cbm { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: var(--surface);
+    border: 1px solid var(--line-strong); border-radius: 8px; z-index: 30; box-shadow: 0 8px 24px -6px rgba(0,0,0,.22); touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  .cb.open .cbm { display: block; animation: rise 150ms var(--ease) backwards; }
+  .cbi { padding: 11px 12px; font-size: 13px; font-weight: 500; text-transform: uppercase; cursor: pointer; border-bottom: 1px solid var(--line); user-select: none; }
+  .cbi:last-child { border-bottom: 0; }
+  .cbi:hover, .cbi:active { background: var(--accent-soft); color: var(--accent); }
+  .cbn { padding: 11px 12px; font-size: 12px; color: var(--ink-3); font-style: italic; }
+
+  /* ---------- usuarios ---------- */
+  .narrow { max-width: 640px; margin: 0 auto; padding: 20px 16px 64px; }
+  .narrow h2 { font-size: 20px; margin: 0 0 4px; font-weight: 600; }
+  .urow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .urow .n { flex: 1; min-width: 0; } .urow .n b { font-weight: 500; } .urow .n small { display: block; color: var(--ink-3); font-size: 12px; }
+  .sec { margin: 22px 0 6px; font-size: 14px; font-weight: 600; }
+
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 8px); background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 8px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease), transform 180ms var(--ease); z-index: 60; max-width: 92vw; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- tablet y teléfono ---------- */
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; gap: 18px; padding-top: 14px; }
+    .side { position: static; }
+    .stamp, .who span { display: none; }
+  }
+  @media (max-width: 560px) {
+    .bar { padding: 6px 12px; flex-wrap: wrap; }
+    .bar-nav { order: 3; width: 100%; flex-basis: 100%; justify-content: flex-start; overflow-x: auto; padding-bottom: 4px; }
+    .brand .s, .who { display: none; }
+    .shell { padding: 12px 12px 64px; }
+    .panel { padding: 12px; }
+    .cell { height: 38px; gap: 2px; }
+    .cell .n { min-width: 24px; height: 24px; font-size: 13px; }
+    .dows div { padding: 2px 0; }
+    .cal-head { margin-bottom: 4px; }
+    .cal-foot { margin-top: 8px; padding-top: 10px; flex-direction: row; align-items: center; gap: 10px; }
+    .cal-foot .sum { flex: 1; font-size: 12px; line-height: 1.3; }
+    .cal-foot select { width: 46%; height: 36px; font-size: 13px; }
+    .day-title { font-size: 20px; }
+    .kv { grid-template-columns: 112px 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition-duration: 1ms !important; } }
+</style>
 </head>
-<body class="bg-background font-body text-on-surface uppercase">
+<body>
 
-    <!-- Header superior -->
-    <header class="fixed top-0 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-border z-40 flex items-center justify-between px-4 md:px-8 left-0">
-        <div class="flex items-center gap-4">
-            <h1 class="font-semibold text-lg md:text-xl text-on-surface tracking-tight">REGISTRO DE CUADRILLAS</h1>
-            <div class="h-4 w-[1px] bg-outline-variant mx-2 hidden sm:block"></div>
-            <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-technician-t1/10 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-technician-t1 animate-pulse"></span>
-                <span class="text-xs font-bold text-technician-t1">SISTEMA ONLINE</span>
-            </div>
-        </div>
-        <div class="flex items-center gap-6">
-            <div class="flex flex-col items-end">
-                <span class="text-[10px] font-bold text-on-surface-variant">HOY</span>
-                <span id="currentDateDisplay" class="text-xs font-semibold text-on-surface">--</span>
-            </div>
-        </div>
-    </header>
+<!-- ACCESO -->
+<div class="login hidden" id="loginView">
+  <div class="box">
+    <div class="brand" id="loginBrand"></div>
+    <p>Ingresa con tu DNI y tu PIN.</p>
+    <div class="field"><label for="loginDni">DNI</label><input id="loginDni" inputmode="numeric" maxlength="8" autocomplete="username"></div>
+    <div class="field"><label for="loginPin">PIN</label><input id="loginPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password"></div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn primary full" id="loginBtn">Ingresar</button>
+  </div>
+</div>
 
-    <!-- Main Container -->
-    <main class="relative pt-16 min-h-screen bg-background">
-        <form id="mainForm" class="flex flex-col w-full px-4 md:px-8 py-8 max-w-[800px] mx-auto min-h-screen pb-32">
-
-            <!-- BLOQUE 1: Sede y Coordinador (compartidos por todas las cuadrillas) -->
-            <div id="bloqueGeneral" class="bg-surface-container-lowest rounded-xl shadow-lg relative p-6 md:p-8 flex flex-col gap-6 mb-8">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-8 -mt-8 pointer-events-none overflow-hidden"></div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-on-surface-variant">SEDE DE OPERACIONES</label>
-                    <div class="relative w-full">
-                        <select id="inputSede" class="w-full h-[48px] bg-surface pl-4 pr-10 rounded-lg text-on-surface font-semibold text-sm appearance-none cursor-pointer hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" required>
-                            <option value="" disabled selected>SELECCIONAR SEDE</option>
-                        </select>
-                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-on-surface-variant">NOMBRE DEL COORDINADOR</label>
-                    <div id="coordinadorWrapper"></div>
-                </div>
-            </div>
-
-            <!-- BLOQUE 2..N: Cuadrillas -->
-            <div id="cuadrillasContainer" class="flex flex-col gap-8"></div>
-
-            <div class="w-full max-w-[800px] h-32 mt-6 bg-cover bg-center rounded-2xl opacity-40 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCOcxHHvYOOFMkKXimteTE1G-TFePL6NiFuA6FjutFpwFBlySX3lOuCvAaNNUdlrf89Gg4zdZrAxqMNOiOKpxl-5RmeuB6NdAGuXcvWOTZ96zqqwDhM15w_8uSiQHpek4gfQbTw_yuu8EdcryqV6yYVM9X-HrY3c2hLtFTbTA-KxFAKpRuOgiuN-89-CL2hm_2vt1qs7aHTLgeRRtjcobwDqiRzA-p3klDXdzrZ97J79SGOjtehxzSQ');"></div>
-
-            <div class="fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-md p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.05)] flex justify-center z-40">
-                <div class="w-full max-w-[800px] flex flex-col sm:flex-row gap-4">
-                    <button type="button" id="btnAddCuadrilla" class="flex-1 h-[48px] rounded-lg border-2 border-surface-border bg-transparent text-on-surface font-semibold text-sm hover:bg-surface hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
-                        AGREGAR OTRA CUADRILLA
-                    </button>
-                    <button type="submit" id="btnSubmit" class="flex-1 h-[48px] rounded-lg bg-primary text-on-primary font-semibold text-sm hover:bg-primary-container hover:shadow-md transition-all active:shadow-inner flex items-center justify-center gap-2">
-                        ENVIAR REGISTROS
-                        <span class="material-symbols-outlined text-[20px]">send</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </main>
-
-    <!-- Modal Spinner de Carga -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-primary/70 backdrop-blur-sm z-50 hidden flex-col items-center justify-center text-white gap-4">
-        <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-        <span id="loadingText" class="font-semibold text-base">Cargando datos...</span>
+<!-- APLICACIÓN -->
+<div class="hidden" id="appView">
+  <header class="bar">
+    <div class="brand" id="barBrand"></div>
+    <div class="bar-r">
+      <span class="stamp" id="stamp"></span>
+      <button class="icon-btn" id="refresh" title="Actualizar" aria-label="Actualizar"></button>
+      <div class="who"><b id="whoName">--</b><span id="whoRol"></span></div>
+      <button class="icon-btn" id="btnSalir" title="Salir" aria-label="Salir"></button>
     </div>
-
-    <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz66zCFtkOvCNZQGNHyll7DdS0d-xDw0p3NvZ74UZUggEPPwiaPtZAcgZ58w9BSa4BXsg/exec";
-
-        let globalData = { sedes: [], placas: [], personal: [] };
-
-        function normalizeText(text) {
-            return String(text || "")
-                .toUpperCase()
-                .normalize("NFD")
-                .replace(/[̀-ͯ]/g, "")
-                .trim();
-        }
-
-        // tipoRequerido: COORDINADOR | T1 | T2 | USUARIO
-        // USUARIO lista solo al personal cuyo CARGO es "TECNICO 1 / COORDINADOR"
-        function matchesCargo(cargoDB, tipoRequerido) {
-            const cargoNorm = normalizeText(cargoDB);
-            const tipoNorm = normalizeText(tipoRequerido);
-
-            if (tipoNorm === 'COORDINADOR') {
-                return cargoNorm.includes("COORDINADOR");
-            } else if (tipoNorm === 'T1') {
-                return cargoNorm.includes("TECNICO 1") || cargoNorm.includes("TECNICO1") || cargoNorm.includes("T1");
-            } else if (tipoNorm === 'T2') {
-                return cargoNorm.includes("TECNICO 2") || cargoNorm.includes("TECNICO2") || cargoNorm.includes("T2");
-            } else if (tipoNorm === 'USUARIO') {
-                // Cargo "USUARIO", o el cargo combinado anterior "TECNICO 1 / COORDINADOR"
-                return cargoNorm.includes("USUARIO") ||
-                    (cargoNorm.includes("COORDINADOR") && (cargoNorm.includes("TECNICO 1") || cargoNorm.includes("TECNICO1")));
-            }
-            return false;
-        }
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            const now = new Date();
-            const options = { day: '2-digit', month: 'short', year: 'numeric' };
-            document.getElementById("currentDateDisplay").innerText = now.toLocaleDateString('es-ES', options).toUpperCase();
-
-            // Bloque 1: coordinador
-            document.getElementById("coordinadorWrapper").innerHTML =
-                createCustomDropdownHtml("input-coordinador", "SELECCIONE O DIGITE...", "search");
-            initCustomDropdown(document.querySelector(".input-coordinador"));
-
-            document.getElementById("inputSede").addEventListener("change", refreshOptions);
-
-            addNewCuadrilla();
-            await loadMasterData();
-
-            document.getElementById("btnAddCuadrilla").addEventListener("click", () => addNewCuadrilla());
-            document.getElementById("mainForm").addEventListener("submit", handleSubmit);
-
-            document.addEventListener("pointerdown", (e) => {
-                if (!e.target.closest(".custom-dropdown-container")) {
-                    closeAllDropdowns();
-                }
-            });
-        });
-
-        function closeAllDropdowns() {
-            document.querySelectorAll(".custom-dropdown-container").forEach(el => el.classList.remove("open"));
-        }
-
-        async function loadMasterData() {
-            try {
-                showLoading("Cargando personal y placas...");
-                const response = await fetch(WEB_APP_URL);
-                if (!response.ok) throw new Error("Error en la respuesta del servidor");
-                globalData = await response.json();
-                updateSedeSelect();
-                refreshOptions();
-            } catch (err) {
-                console.warn("Modo sin conexión o fallo al cargar datos:", err);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function updateSedeSelect() {
-            const sedeSelect = document.getElementById("inputSede");
-            const currentSede = sedeSelect.value;
-            sedeSelect.innerHTML = '<option value="" disabled selected>SELECCIONAR SEDE</option>' +
-                globalData.sedes.map(s => `<option value="${s}">${s}</option>`).join('');
-            sedeSelect.value = currentSede;
-        }
-
-        // Recalcula las listas desplegables según la sede elegida en el bloque 1
-        function refreshOptions() {
-            const sedeNorm = normalizeText(document.getElementById("inputSede").value);
-
-            const filteredPersonal = globalData.personal.filter(p => {
-                return !sedeNorm || normalizeText(p.sede) === sedeNorm;
-            });
-
-            const namesFor = (tipo) => Array.from(new Set(
-                filteredPersonal.filter(p => matchesCargo(p.cargo, tipo)).map(p => p.nombre)
-            ));
-
-            // Coordinador (bloque 1)
-            const coordContainer = document.querySelector(".input-coordinador").closest(".custom-dropdown-container");
-            coordContainer._optionsList = namesFor("COORDINADOR");
-
-            // Cuadrillas
-            document.querySelectorAll(".cuadrilla-card").forEach(card => {
-                const placaContainer = card.querySelector(".input-placa").closest(".custom-dropdown-container");
-                placaContainer._optionsList = Array.from(new Set(globalData.placas));
-
-                card.querySelectorAll("[data-tipo]").forEach(row => {
-                    const input = row.querySelector(".input-dropdown-persona");
-                    if (!input) return;
-                    input.closest(".custom-dropdown-container")._optionsList = namesFor(row.dataset.tipo);
-                });
-            });
-        }
-
-        function renumberCuadrillas() {
-            document.querySelectorAll(".cuadrilla-card").forEach((card, i) => {
-                card.dataset.id = i + 1;
-                card.querySelector(".titulo-cuadrilla").innerText = `CUADRILLA #${i + 1}`;
-            });
-        }
-
-        function addNewCuadrilla() {
-            const container = document.getElementById("cuadrillasContainer");
-            const index = container.children.length + 1;
-
-            const card = document.createElement("div");
-            card.className = "cuadrilla-card bg-surface-container-lowest rounded-xl shadow-lg relative p-6 md:p-8 flex flex-col gap-6 group hover:shadow-xl transition-shadow duration-300";
-            card.dataset.id = index;
-
-            card.innerHTML = `
-                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-8 -mt-8 pointer-events-none"></div>
-
-                <div class="flex items-center justify-between mb-2 relative">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-primary text-[28px]">groups</span>
-                        </div>
-                        <div>
-                            <h2 class="titulo-cuadrilla font-semibold text-lg text-on-surface tracking-tight">CUADRILLA #${index}</h2>
-                            <p class="text-sm text-on-surface-variant lowercase">Complete la información de la unidad de campo.</p>
-                        </div>
-                    </div>
-                    ${index > 1 ? `
-                        <button type="button" onclick="removeCuadrilla(this)" class="px-3 py-1 bg-error-container text-on-error-container rounded-lg text-xs font-bold hover:bg-error/20 transition-colors">
-                            ELIMINAR
-                        </button>
-                    ` : ''}
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-on-surface-variant">FECHA DE TRABAJO EN CAMPO</label>
-                    <div class="flex items-center gap-3">
-                        <div class="relative flex-1 min-w-0">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
-                            <input class="input-fecha w-full h-[48px] bg-surface pl-10 pr-4 rounded-lg text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" type="date" value="${localDateISO()}" required>
-                        </div>
-                        <span class="dia-semana shrink-0 min-w-[96px] text-center text-xs font-bold text-primary bg-primary/10 px-3 py-3 rounded-lg">${nombreDia(localDateISO())}</span>
-                    </div>
-                </div>
-
-                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
-
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-on-surface-variant">TÉCNICO 1, TÉCNICO 2 Y USUARIO (OBLIGATORIOS)</label>
-                        <span class="badge-asignados text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">0 ASIGNADOS</span>
-                    </div>
-
-                    <div class="tecnicos-list flex flex-col gap-3"></div>
-
-                    <div class="flex flex-col sm:flex-row gap-3 mt-1">
-                        <button type="button" onclick="addTecnico(this, 'T1')" class="btn-add-t1 flex-1 h-[52px] px-4 flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
-                            <span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors">add</span>
-                            <span class="text-sm font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 1</span>
-                        </button>
-
-                        <button type="button" onclick="addTecnico(this, 'T2')" class="btn-add-t2 flex-1 h-[52px] px-4 flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
-                            <span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors">add</span>
-                            <span class="text-sm font-bold group-hover:text-primary transition-colors">AGREGAR TÉCNICO 2</span>
-                        </button>
-
-                        <button type="button" onclick="addTecnico(this, 'USUARIO')" class="btn-add-usuario flex-1 h-[52px] px-4 flex items-center justify-center gap-2 rounded-lg border border-surface-border hover:bg-surface hover:border-primary transition-all text-on-surface group">
-                            <span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors">add</span>
-                            <span class="text-sm font-bold group-hover:text-primary transition-colors">AGREGAR USUARIO</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-surface-border to-transparent my-1"></div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-on-surface-variant">PLACA DEL VEHÍCULO</label>
-                    ${createCustomDropdownHtml("input-placa", "ABC-1234", "local_shipping", true)}
-                </div>
-            `;
-
-            container.appendChild(card);
-            initCustomDropdown(card.querySelector(".input-placa"));
-            refreshOptions();
-        }
-
-        // Nombre del día (LUNES, MARTES, ...) de una fecha yyyy-mm-dd
-        function nombreDia(iso) {
-            const p = String(iso || "").split("-");
-            if (p.length !== 3 || !p[0]) return "--";
-            const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
-            if (isNaN(d.getTime())) return "--";
-            return ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"][d.getDay()];
-        }
-
-        // Actualiza el día al costado cuando se cambia la fecha
-        document.addEventListener("input", (e) => {
-            if (e.target.classList && e.target.classList.contains("input-fecha")) {
-                const badge = e.target.closest(".cuadrilla-card").querySelector(".dia-semana");
-                if (badge) badge.innerText = nombreDia(e.target.value);
-            }
-        });
-
-        function localDateISO() {
-            const d = new Date();
-            const pad = n => String(n).padStart(2, "0");
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        }
-
-        // required: si es false el campo es opcional (usuario)
-        function createCustomDropdownHtml(inputClass, placeholder, iconName, isPlaca = false, required = true) {
-            return `
-                <div class="custom-dropdown-container">
-                    <div class="relative w-full flex">
-                        ${iconName ? `
-                            <div class="w-12 bg-surface rounded-l-lg flex items-center justify-center border-r border-surface-border shrink-0">
-                                <span class="material-symbols-outlined text-on-surface-variant text-[20px]">${iconName}</span>
-                            </div>
-                        ` : ''}
-                        <input class="${inputClass} w-full h-[48px] bg-surface ${iconName ? 'pl-3' : 'pl-4'} pr-10 ${iconName ? 'rounded-r-lg' : 'rounded-lg'} text-on-surface font-semibold text-sm placeholder:text-on-surface-variant/50 hover:bg-surface-container-low transition-colors outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest" placeholder="${placeholder}" type="text" autocomplete="off" ${required ? 'required' : ''}>
-                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">
-                            ${isPlaca ? 'arrow_drop_down' : 'expand_more'}
-                        </span>
-                    </div>
-                    <div class="custom-dropdown-menu"></div>
-                </div>
-            `;
-        }
-
-        function initCustomDropdown(inputElement) {
-            const container = inputElement.closest(".custom-dropdown-container");
-            const menu = container.querySelector(".custom-dropdown-menu");
-
-            if (!container._optionsList) {
-                container._optionsList = [];
-            }
-
-            const renderOptions = (filterText = "") => {
-                const options = container._optionsList || [];
-                const searchNorm = normalizeText(filterText);
-                const filtered = options.filter(opt => normalizeText(opt).includes(searchNorm));
-
-                if (filtered.length === 0) {
-                    menu.innerHTML = `<div class="dropdown-no-results">SIN COINCIDENCIAS (CONSERVARÁ TEXTO LIBRE)</div>`;
-                } else {
-                    menu.innerHTML = filtered.map(opt => `<div class="dropdown-item" data-value="${opt}">${opt}</div>`).join("");
-                }
-            };
-
-            const openMenu = () => {
-                refreshOptions();
-                closeAllDropdowns();
-                container.classList.add("open");
-                renderOptions(inputElement.value);
-            };
-
-            inputElement.addEventListener("focus", openMenu);
-            inputElement.addEventListener("click", openMenu);
-
-            inputElement.addEventListener("input", () => {
-                inputElement.value = inputElement.value.toUpperCase();
-                if (!container.classList.contains("open")) {
-                    container.classList.add("open");
-                }
-                renderOptions(inputElement.value);
-            });
-
-            // CONTROL DE SCROLL VS CLICK EN MÓVILES
-            let isScrolling = false;
-            let startY = 0;
-
-            menu.addEventListener("touchstart", (e) => {
-                isScrolling = false;
-                startY = e.touches[0].clientY;
-            }, { passive: true });
-
-            menu.addEventListener("touchmove", (e) => {
-                const moveY = e.touches[0].clientY;
-                if (Math.abs(moveY - startY) > 6) {
-                    isScrolling = true;
-                }
-            }, { passive: true });
-
-            menu.addEventListener("click", (e) => {
-                if (isScrolling) {
-                    isScrolling = false;
-                    return;
-                }
-
-                const item = e.target.closest(".dropdown-item");
-                if (item) {
-                    inputElement.value = item.dataset.value;
-                    container.classList.remove("open");
-                }
-            });
-        }
-
-        function removeCuadrilla(btn) {
-            btn.closest(".cuadrilla-card").remove();
-            renumberCuadrillas();
-        }
-
-        // Agrega una fila de T1, T2 o USUARIO a la cuadrilla
-        function addTecnico(btn, tipo) {
-            const card = btn.closest(".cuadrilla-card");
-            const tecnicosList = card.querySelector(".tecnicos-list");
-            const esUsuario = tipo === 'USUARIO';
-            const numero = tipo === 'T1' ? '1' : '2';
-
-            if (tecnicosList.querySelector(`[data-tipo="${tipo}"]`)) {
-                alert(esUsuario ? "Ya agregaste el USUARIO en esta cuadrilla." : `Ya agregaste el TÉCNICO ${numero} en esta cuadrilla.`);
-                return;
-            }
-
-            const row = document.createElement("div");
-            row.className = `${esUsuario ? 'usuario-row' : 'tecnico-row'} group relative flex items-start bg-surface hover:bg-surface-container-low transition-colors rounded-lg p-3 pr-4 w-full h-auto mb-2 border border-surface-border`;
-            row.dataset.tipo = tipo;
-
-            const bgBadge = tipo === 'T1' ? 'bg-technician-t1' : tipo === 'T2' ? 'bg-technician-t2' : 'bg-technician-user';
-            const badgeText = esUsuario ? 'US' : tipo;
-            const labelText = esUsuario ? 'Usuario' : `Nombre del Técnico ${numero}`;
-            const placeholder = esUsuario ? 'SELECCIONE O DIGITE USUARIO' : `SELECCIONE O DIGITE TÉCNICO ${numero}`;
-
-            const opcionRapidaHtml = tipo === 'T2' ? `
-                <div class="mt-2 flex items-center gap-2">
-                    <button type="button" onclick="marcarRutaSinT2(this)" class="btn-quick-sin-t2 text-[11px] font-bold text-primary hover:underline flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
-                        <span class="material-symbols-outlined text-[14px]">block</span>
-                        MARCAR COMO "RUTA SIN T2"
-                    </button>
-                </div>
-            ` : '';
-
-            row.innerHTML = `
-                <div class="w-10 flex items-center justify-center shrink-0 pt-2">
-                    <span class="w-8 h-8 rounded-full ${bgBadge} flex items-center justify-center font-bold text-xs text-on-surface">${badgeText}</span>
-                </div>
-
-                <div class="flex-1 min-w-0 px-3 border-l border-surface-border flex flex-col gap-2">
-                    <div>
-                        <label class="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">${labelText}</label>
-                        ${createCustomDropdownHtml("input-dropdown-persona " + (esUsuario ? "input-usuario" : "input-nombre-tecnico"), placeholder, "", false, true)}
-                    </div>
-                    ${opcionRapidaHtml}
-                </div>
-
-                <button type="button" onclick="removeTecnicoRow(this)" class="w-8 h-8 rounded-full hover:bg-error/10 flex items-center justify-center text-on-surface-variant hover:text-error transition-colors shrink-0 mt-2">
-                    <span class="material-symbols-outlined text-[18px]">close</span>
-                </button>
-            `;
-
-            tecnicosList.appendChild(row);
-            initCustomDropdown(row.querySelector(".input-dropdown-persona"));
-            refreshOptions();
-            updateBadgeAsignados(card);
-
-            btn.disabled = true;
-            btn.classList.add("opacity-40", "cursor-not-allowed");
-        }
-
-        function updateBadgeAsignados(card) {
-            const total = card.querySelectorAll(".tecnico-row").length;
-            const badge = card.querySelector(".badge-asignados");
-            if (badge) badge.innerText = `${total} ASIGNADOS`;
-        }
-
-        // Marcar "RUTA SIN TÉCNICO 2"
-        function marcarRutaSinT2(btnOpcion) {
-            const row = btnOpcion.closest(".tecnico-row");
-            const inputTecnico = row.querySelector(".input-nombre-tecnico");
-
-            if (inputTecnico.value === "RUTA SIN TÉCNICO 2") {
-                inputTecnico.value = "";
-                inputTecnico.readOnly = false;
-                inputTecnico.classList.remove("bg-surface-container-high", "cursor-not-allowed");
-
-                btnOpcion.innerHTML = `
-                    <span class="material-symbols-outlined text-[14px]">block</span>
-                    MARCAR COMO "RUTA SIN T2"
-                `;
-                btnOpcion.classList.remove("bg-gray-200", "text-gray-700");
-                btnOpcion.classList.add("bg-primary/10", "text-primary");
-            } else {
-                inputTecnico.value = "RUTA SIN TÉCNICO 2";
-                inputTecnico.readOnly = true;
-                inputTecnico.classList.remove("border-red-500", "bg-red-50");
-                inputTecnico.classList.add("bg-surface-container-high", "cursor-not-allowed");
-
-                btnOpcion.innerHTML = `
-                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                    MARCADO: RUTA SIN T2 (Clic para deshacer)
-                `;
-                btnOpcion.classList.remove("bg-primary/10", "text-primary");
-                btnOpcion.classList.add("bg-gray-200", "text-gray-700");
-            }
-        }
-
-        // Quitar fila de técnico o usuario
-        function removeTecnicoRow(btn) {
-            const card = btn.closest(".cuadrilla-card");
-            const row = btn.closest("[data-tipo]");
-            const tipo = row.dataset.tipo;
-
-            row.remove();
-            updateBadgeAsignados(card);
-
-            const btnTarget = card.querySelector(`.btn-add-${tipo.toLowerCase()}`);
-            if (btnTarget) {
-                btnTarget.disabled = false;
-                btnTarget.classList.remove("opacity-40", "cursor-not-allowed");
-            }
-        }
-
-        // handleSubmit con validaciones
-        async function handleSubmit(e) {
-            e.preventDefault();
-            const btnSubmit = document.getElementById("btnSubmit");
-
-            try {
-                const sede = document.getElementById("inputSede").value;
-                const coordinador = document.querySelector(".input-coordinador").value.trim();
-                const tarjetas = document.querySelectorAll(".cuadrilla-card");
-                let payload = [];
-                let errores = false;
-
-                tarjetas.forEach((card, index) => {
-                    if (errores) return;
-
-                    const fecha = card.querySelector(".input-fecha").value;
-                    const placa = card.querySelector(".input-placa").value;
-                    const usuarioInput = card.querySelector(".input-usuario");
-                    const usuario = usuarioInput ? usuarioInput.value.trim() : "";
-
-                    const rowT1 = card.querySelector('.tecnico-row[data-tipo="T1"]');
-                    const rowT2 = card.querySelector('.tecnico-row[data-tipo="T2"]');
-
-                    const valT1 = rowT1 ? rowT1.querySelector(".input-nombre-tecnico").value.trim() : "";
-                    const valT2 = rowT2 ? rowT2.querySelector(".input-nombre-tecnico").value.trim() : "";
-
-                    if (!valT1) {
-                        errores = true;
-                        if (rowT1) rowT1.querySelector(".input-nombre-tecnico").classList.add("border-2", "border-red-500", "bg-red-50");
-                        alert(`Cuadrilla #${index + 1}: Debe seleccionar un NOMBRE para el TÉCNICO 1.`);
-                        return;
-                    }
-
-                    if (!rowT2 || !valT2) {
-                        errores = true;
-                        if (rowT2) rowT2.querySelector(".input-nombre-tecnico").classList.add("border-2", "border-red-500", "bg-red-50");
-                        alert(`Cuadrilla #${index + 1}: Debe agregar el TÉCNICO 2 y seleccionar un nombre o 'RUTA SIN TÉCNICO 2'.`);
-                        return;
-                    }
-
-                    if (!usuario) {
-                        errores = true;
-                        if (usuarioInput) usuarioInput.classList.add("border-2", "border-red-500", "bg-red-50");
-                        alert(`Cuadrilla #${index + 1}: Debe agregar el USUARIO (seleccione o digite el nombre).`);
-                        return;
-                    }
-
-                    if (!placa.trim()) {
-                        errores = true;
-                        card.querySelector(".input-placa").classList.add("border-2", "border-red-500", "bg-red-50");
-                        alert(`Cuadrilla #${index + 1}: Debe indicar la PLACA DEL VEHÍCULO.`);
-                        return;
-                    }
-
-                    const integrantes = [];
-                    card.querySelectorAll(".tecnico-row").forEach(tRow => {
-                        const nombreTec = tRow.querySelector(".input-nombre-tecnico").value.trim();
-                        if (nombreTec) integrantes.push({ nombre: nombreTec, cargo: tRow.dataset.tipo });
-                    });
-
-                    payload.push({ numeroCuadrilla: index + 1, sede, coordinador, fecha, placa, usuario, integrantes });
-                });
-
-                if (errores) return;
-
-                btnSubmit.disabled = true;
-                showLoading("Guardando Registro...");
-
-                const response = await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.status === "success") {
-                    hideLoading();
-                    mostrarModalOpciones(payload);
-                } else {
-                    throw new Error(result.message || "Error al registrar en Google Sheets.");
-                }
-
-            } catch (err) {
-                hideLoading();
-                alert("Error al enviar los datos: " + err.message);
-            } finally {
-                btnSubmit.disabled = false;
-            }
-        }
-
-        function mostrarModalOpciones(payload) {
-            const oldModal = document.getElementById("modalOpcionesPDF");
-            if (oldModal) oldModal.remove();
-
-            const modal = document.createElement("div");
-            modal.id = "modalOpcionesPDF";
-            modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 999999; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;";
-
-            modal.innerHTML = `
-                <div style="background: #ffffff; border-radius: 16px; padding: 30px 20px; text-align: center; max-width: 420px; width: 100%; font-family: system-ui, -apple-system, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-
-                    <div style="margin-bottom: 15px; display: flex; justify-content: center;">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-
-                    <h2 style="margin: 0 0 8px 0; color: #003f87; font-size: 20px; font-weight: 700; text-transform: uppercase;">¡REGISTRO EXITOSO!</h2>
-                    <p style="font-size: 11px; color: #666666; margin: 0 0 30px 0; font-weight: 500; line-height: 1.4; text-transform: uppercase;">
-                        LOS DATOS SE GUARDARON CORRECTAMENTE.<br>SELECCIONA UNA OPCIÓN:
-                    </p>
-
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
-
-                        <button id="btnVerRegistro" style="background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #003f87; flex: 1; padding: 0;">
-                            <svg style="width: 28px; height: 28px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                            <span style="font-size: 10px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; line-height: 1.1; text-align: center;">MOSTRAR<br>REGISTRO</span>
-                        </button>
-
-                        <button id="btnCompartirRegistro" style="background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #003f87; flex: 1; padding: 0;">
-                            <svg style="width: 26px; height: 26px;" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                            <span style="font-size: 10px; font-weight: 700; color: #1a1a1a; text-transform: uppercase; line-height: 1.1; text-align: center;">COMPARTIR</span>
-                        </button>
-
-                        <div style="flex: 1.3; display: flex; justify-content: flex-end;">
-                            <button id="btnFinalizarPagina" style="background-color: #003f87; color: #ffffff; border: none; border-radius: 9999px; padding: 10px 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: background-color 0.2s; width: 100%;">
-                                <svg style="width: 20px; height: 20px; stroke: #ffffff; color: #ffffff;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                                </svg>
-                                <span style="font-size: 13px; font-weight: 700; color: #ffffff; text-transform: uppercase; white-space: nowrap;">FINALIZAR</span>
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            document.getElementById("btnVerRegistro").addEventListener("click", async () => {
-                const btn = document.getElementById("btnVerRegistro");
-                btn.style.pointerEvents = "none";
-                btn.style.opacity = "0.4";
-                await procesarPDFOpcion(payload, "VER");
-                btn.style.pointerEvents = "auto";
-                btn.style.opacity = "1";
-            });
-
-            document.getElementById("btnCompartirRegistro").addEventListener("click", async () => {
-                const btn = document.getElementById("btnCompartirRegistro");
-                btn.style.pointerEvents = "none";
-                btn.style.opacity = "0.4";
-                await procesarPDFOpcion(payload, "COMPARTIR");
-                btn.style.pointerEvents = "auto";
-                btn.style.opacity = "1";
-            });
-
-            document.getElementById("btnFinalizarPagina").addEventListener("click", () => {
-                location.reload();
-            });
-        }
-
-        // Generador de PDF según la acción seleccionada (VER / COMPARTIR)
-        async function procesarPDFOpcion(payload, accion) {
-            const sedesUnicas = Array.from(new Set(payload.map(p => p.sede).filter(Boolean)));
-            let sedeNombre = sedesUnicas.length === 1 ? sedesUnicas[0].replace(/[^a-zA-Z0-9]/g, "_").toUpperCase() : "GENERAL";
-            const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `Registro_Cuadrillas_${sedeNombre}_${dateStr}.pdf`;
-
-            const printElement = document.createElement("div");
-            printElement.style.cssText = "width: 650px; padding: 20px; background: #ffffff; color: #000000; position: fixed; top: 0; left: 0; z-index: 9999999;";
-
-            let contenidoHtml = `
-                <div style="font-family: Arial, sans-serif; color: #000000;">
-                    <div style="text-align: center; border-bottom: 2px solid #003f87; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h1 style="color: #003f87; margin: 0; font-size: 18px; font-weight: bold;">RESUMEN DE REGISTRO DE CUADRILLAS</h1>
-                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #333333;">SEDE: ${sedeNombre} | FECHA: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
-                    </div>
-            `;
-
-            payload.forEach((c, idx) => {
-                contenidoHtml += `
-                    <div style="border: 1px solid #000000; border-radius: 4px; padding: 10px; margin-bottom: 12px; background: #ffffff;">
-                        <h3 style="color: #003f87; margin: 0 0 6px 0; border-bottom: 1px solid #cccccc; padding-bottom: 4px; font-size: 13px;">CUADRILLA #${idx + 1}</h3>
-                        <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 6px;">
-                            <tr><td style="padding: 2px; font-weight: bold; width: 35%;">SEDE DE OPERACIÓN:</td><td style="padding: 2px;">${c.sede || 'N/A'}</td></tr>
-                            <tr><td style="padding: 2px; font-weight: bold;">COORDINADOR:</td><td style="padding: 2px;">${c.coordinador || 'N/A'}</td></tr>
-                            <tr><td style="padding: 2px; font-weight: bold;">FECHA EN CAMPO:</td><td style="padding: 2px;">${c.fecha || 'N/A'}</td></tr>
-                            <tr><td style="padding: 2px; font-weight: bold;">PLACA VEHÍCULO:</td><td style="padding: 2px;">${c.placa || 'N/A'}</td></tr>
-                            <tr><td style="padding: 2px; font-weight: bold;">USUARIO REGISTRO:</td><td style="padding: 2px;">${c.usuario || 'N/A'}</td></tr>
-                        </table>
-                        <div style="font-size: 10px; font-weight: bold; margin-top: 4px; border-top: 1px dashed #aaaaaa; padding-top: 4px;">TÉCNICOS ASIGNADOS (${c.integrantes.length}):</div>
-                        <ul style="margin: 2px 0 0 0; padding-left: 15px; font-size: 10px;">
-                            ${c.integrantes.length > 0
-                                ? c.integrantes.map(t => `<li style="margin-bottom: 2px;"><strong>[${t.cargo}]</strong> ${t.nombre}</li>`).join('')
-                                : '<li>Sin técnicos registrados</li>'
-                            }
-                        </ul>
-                    </div>
-                `;
-            });
-
-            contenidoHtml += `</div>`;
-            printElement.innerHTML = contenidoHtml;
-            document.body.appendChild(printElement);
-
-            await new Promise(r => setTimeout(r, 200));
-
-            try {
-                const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
-                if (document.body.contains(printElement)) document.body.removeChild(printElement);
-
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-                const pdf = new jsPDFLib('p', 'mm', 'a4');
-
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                const pdfBlob = pdf.output('blob');
-
-                if (accion === "VER") {
-                    window.open(URL.createObjectURL(pdfBlob), '_blank');
-                } else if (accion === "COMPARTIR") {
-                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({ title: `Registro Cuadrillas - ${sedeNombre}`, files: [file] });
-                    } else {
-                        window.open(URL.createObjectURL(pdfBlob), '_blank');
-                    }
-                }
-
-            } catch (err) {
-                if (document.body.contains(printElement)) document.body.removeChild(printElement);
-                alert("Error al procesar el documento: " + err.message);
-            }
-        }
-
-        function showLoading(text) {
-            document.getElementById("loadingText").innerText = text;
-            document.getElementById("loadingOverlay").style.display = "flex";
-        }
-
-        function hideLoading() {
-            document.getElementById("loadingOverlay").style.display = "none";
-        }
-    </script>
+    <nav class="bar-nav" aria-label="Secciones">
+      <a class="btn sm" id="linkNuevo" href="index.html">Nuevo registro</a>
+      <button class="btn sm hidden" id="btnUsuarios">Usuarios</button>
+      <button class="btn sm hidden" id="btnConfig">Plazos</button>
+    </nav>
+  </header>
+
+  <main class="shell" id="agendaView">
+    <aside class="side">
+      <div class="panel">
+        <div class="cal-head">
+          <button class="icon-btn" id="prev" title="Mes anterior" aria-label="Mes anterior"></button>
+          <h2 id="title">--</h2>
+          <button class="btn text" id="today">Hoy</button>
+          <button class="icon-btn" id="next" title="Mes siguiente" aria-label="Mes siguiente"></button>
+        </div>
+        <div class="dows"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+        <div class="cells" id="grid"></div>
+        <div class="cal-foot">
+          <div class="sum" id="monthSum"></div>
+          <select id="sedeFilter" aria-label="Filtrar por sede"><option value="">Todas las sedes</option></select>
+        </div>
+      </div>
+    </aside>
+    <section id="dayView" aria-live="polite"></section>
+  </main>
+
+  <main class="narrow hidden" id="usersView"></main>
+  <main class="narrow hidden" id="configView"></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// Misma URL de la web app que usa el formulario (index.html)
+var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz66zCFtkOvCNZQGNHyll7DdS0d-xDw0p3NvZ74UZUggEPPwiaPtZAcgZ58w9BSa4BXsg/exec";
+
+var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var DIAS_LARGO = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+var ROLES = ["COORDINADOR","SUPERVISOR","JEFE DE OPERACIONES"];
+var CAMPOS_FORM = [
+  ["fecha","Fecha en campo","date"], ["sede","Sede de operación"], ["coordinador","Coordinador"],
+  ["t1","Técnico 1"], ["t2","Técnico 2"], ["usuario","Usuario sistema"], ["placa","Placa del vehículo"]
+];
+var HUES = [18, 78, 150, 190, 218, 335];
+
+/* ---------- iconos (un solo juego, trazo uniforme) ---------- */
+var ICONS = {
+  left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  down: '<path d="m6 9 6 6 6-6"/>', up: '<path d="m18 15-6-6-6 6"/>',
+  edit: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', plus: '<path d="M5 12h14"/><path d="M12 5v14"/>'
+};
+function ico(n) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[n] + '</svg>'; }
+
+// Marca del producto: una placa de vehículo con dos remaches
+var MARK = '<svg class="mark" viewBox="0 0 34 24" aria-hidden="true"><rect x="1" y="1" width="32" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>' +
+  '<circle cx="6" cy="12" r="1.6" fill="var(--accent)"/><circle cx="28" cy="12" r="1.6" fill="var(--accent)"/><path d="M11 9h12M11 15h8" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>';
+
+var state = { token: "", user: null, year: 0, month: 0, today: "", rows: [], estados: [], sede: "", selected: "",
+  openCards: {}, marking: "", editing: null, history: {}, maestros: null, busy: false, loaded: false, error: "", updated: null,
+  animate: false, view: "agenda", users: [], editUser: null };
+
+function $(id) { return document.getElementById(id); }
+function pad(n) { return ("0" + n).slice(-2); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+  return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
+function tc(s) { return String(s || "").toLowerCase().replace(/(^|[\s\-\/(])([a-záéíóúñü])/g, function(m, a, b) { return a + b.toUpperCase(); })
+  .replace(/ (De|Del|La|El|Y|Sin) /g, function(m, w) { return " " + w.toLowerCase() + " "; }); }
+function fmtFecha(iso) { var p = iso.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso; }
+function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(function() { t.classList.remove("show"); }, 2800); }
+function msg(err) { return String((err && err.message) || err).replace(/^Error:\s*/, ""); }
+function hue(name) { var h = 0, s = String(name); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return HUES[h % HUES.length]; }
+function initials(name) { var w = String(name).trim().split(/\s+/); return ((w[0] || "")[0] || "").toUpperCase() + ((w[1] || "")[0] || "").toUpperCase(); }
+
+/* ---------- comunicación con Apps Script ---------- */
+// POST text/plain: evita el preflight de CORS, igual que el formulario
+function callServer(fn, args) {
+  return fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "panel", fn: fn, args: args || [] })
+  })
+  .then(function(r) { if (!r.ok) throw new Error("Error de conexión (" + r.status + ")"); return r.json(); })
+  .then(function(res) { if (!res.ok) throw new Error(res.error || "Error del servidor"); return res.data; });
+}
+
+// Añade siempre el token como primer argumento
+function api(fn, args, ok, fail) {
+  callServer(fn, [state.token].concat(args || [])).then(ok).catch(function(err) {
+    if (/SESION/.test(msg(err))) { logout("Tu sesión venció. Ingresa de nuevo."); return; }
+    if (fail) fail(err); else toast(msg(err));
+  });
+}
+
+/* ---------- sesión ---------- */
+function saveToken(t) { try { t ? localStorage.setItem("panelToken", t) : localStorage.removeItem("panelToken"); } catch (e) {} }
+function readToken() { try { return localStorage.getItem("panelToken") || ""; } catch (e) { return ""; } }
+
+function showLogin(text) {
+  $("appView").classList.add("hidden"); $("loginView").classList.remove("hidden");
+  $("loginErr").textContent = text || ""; $("loginPin").value = "";
+}
+
+function logout(text) {
+  state.token = ""; state.user = null; saveToken("");
+  state.rows = []; state.editing = null; state.history = {}; state.maestros = null; state.loaded = false; state.year = 0;
+  showLogin(text);
+}
+
+function enterApp(user) {
+  state.user = user;
+  $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden");
+  $("whoName").textContent = tc(user.nombre);
+  $("whoRol").textContent = tc(user.rol) + (user.rol === "COORDINADOR" && user.sede ? " · " + tc(user.sede) : "");
+  $("btnUsuarios").classList.toggle("hidden", !user.puedeUsuarios);
+  $("btnConfig").classList.toggle("hidden", !user.puedeUsuarios);
+  setView("agenda");
+  load();
+}
+
+$("loginBtn").onclick = doLogin;
+$("loginPin").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
+$("loginDni").addEventListener("keydown", function(e) { if (e.key === "Enter") $("loginPin").focus(); });
+function doLogin() {
+  var dni = $("loginDni").value.trim(), pin = $("loginPin").value.trim();
+  if (!dni || !pin) { $("loginErr").textContent = "Ingresa DNI y PIN."; return; }
+  $("loginBtn").disabled = true; $("loginErr").textContent = "";
+  callServer("login", [dni, pin])
+    .then(function(res) { $("loginBtn").disabled = false; state.token = res.token; saveToken(res.token); enterApp(res); })
+    .catch(function(err) { $("loginBtn").disabled = false; $("loginErr").textContent = msg(err); });
+}
+$("btnSalir").onclick = function() { logout(""); };
+
+/* ---------- datos ---------- */
+function load(silent) {
+  if (state.busy) return;
+  if (!state.year) {
+    var n = new Date(); state.year = n.getFullYear(); state.month = n.getMonth() + 1;
+    state.selected = state.year + "-" + pad(state.month) + "-" + pad(n.getDate());
+  }
+  state.busy = true; state.error = ""; $("refresh").classList.add("spin");
+  var y = state.year, m = state.month;
+  api("getPanelData", [y, m], function(res) {
+    state.busy = false; $("refresh").classList.remove("spin");
+    if (y !== state.year || m !== state.month) return load(true);
+    state.rows = res.rows; state.today = res.today; state.estados = res.estados; state.user = res.user;
+    state.loaded = true; state.updated = new Date();
+    $("stamp").textContent = "Actualizado " + pad(state.updated.getHours()) + ":" + pad(state.updated.getMinutes());
+    fillSedes(); if (state.view === "agenda") render();
+  }, function(err) {
+    state.busy = false; $("refresh").classList.remove("spin");
+    if (!silent || !state.loaded) { state.error = msg(err); if (state.view === "agenda") render(); }
+  });
+}
+
+function fillSedes() {
+  var sel = $("sedeFilter"), cur = state.sede;
+  var sedes = Array.from(new Set(state.rows.map(function(r) { return r.sede; }).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">Todas las sedes</option>' +
+    sedes.map(function(s) { return '<option value="' + esc(s) + '">' + esc(tc(s)) + '</option>'; }).join("");
+  sel.value = sedes.indexOf(cur) >= 0 ? cur : ""; state.sede = sel.value;
+  sel.classList.toggle("hidden", !!state.user && state.user.rol === "COORDINADOR");
+}
+
+function visibleRows() { return state.rows.filter(function(r) { return !state.sede || r.sede === state.sede; }); }
+
+function render() { renderCalendar(); renderDay(); }
+
+/* ---------- calendario ---------- */
+function renderCalendar() {
+  $("title").textContent = tc(MESES[state.month - 1]) + " " + state.year;
+  var byDay = {};
+  visibleRows().forEach(function(r) { byDay[r.fecha] = (byDay[r.fecha] || 0) + 1; });
+
+  var first = new Date(state.year, state.month - 1, 1);
+  var lead = (first.getDay() + 6) % 7;                       // semana desde lunes
+  var days = new Date(state.year, state.month, 0).getDate();
+  var html = "";
+  for (var i = 0; i < lead; i++) html += '<div class="cell out"></div>';
+  for (var d = 1; d <= days; d++) {
+    var key = state.year + "-" + pad(state.month) + "-" + pad(d);
+    var dow = new Date(state.year, state.month - 1, d).getDay();
+    var c = byDay[key] || 0, dots = "";
+    for (var k = 0; k < Math.min(c, 4); k++) dots += "<i></i>";
+    html += '<button class="cell' + (dow === 0 || dow === 6 ? " wk" : "") + (key === state.today ? " today" : "") + (key === state.selected ? " sel" : "") +
+      '" data-day="' + key + '" aria-label="' + d + ' de ' + MESES[state.month - 1] + (c ? ", " + c + " cuadrilla" + (c > 1 ? "s" : "") : "") + '"' +
+      (key === state.selected ? ' aria-current="date"' : "") + '><span class="n">' + d + '</span><span class="dots">' + dots + '</span></button>';
+  }
+  $("grid").innerHTML = html;
+  var total = Object.keys(byDay).reduce(function(s, k) { return s + byDay[k]; }, 0);
+  $("monthSum").textContent = state.loaded
+    ? total + (total === 1 ? " cuadrilla" : " cuadrillas") + " en el mes · " + Object.keys(byDay).length + (Object.keys(byDay).length === 1 ? " día" : " días") + " con registro"
+    : "Cargando mes…";
+}
+
+/* ---------- detalle del día ---------- */
+function personas(r) {
+  var p = [["COORDINADOR", "Coordinador", r.coordinador], ["T1", "Técnico 1", r.t1], ["T2", "Técnico 2", r.t2], ["USUARIO", "Usuario sistema", r.usuario]];
+  return p.filter(function(x) { return x[2]; });
+}
+function esRuta(n) { return /^RUTA SIN/.test(n); }
+function estadoClass(e) { return e === "ASISTIÓ" ? "ok" : (e === "TARDE" || e === "PERMISO") ? "warn" : e === "FALTÓ" ? "bad" : ""; }
+
+function dayTitle(key) {
+  var p = key.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return tc(DIAS_LARGO[d.getDay()]).replace(/^./, function(c) { return c.toUpperCase(); }) + " " + (+p[2]) + " de " + MESES[+p[1] - 1];
+}
+
+function skeletonDay() {
+  return '<div class="sk" style="height:24px;width:220px"></div><div class="sk" style="height:14px;width:150px;margin-top:10px"></div>' +
+    '<div class="cards">' + [1, 2].map(function() {
+      return '<div class="sk-card"><div style="display:flex;justify-content:space-between"><div class="sk" style="height:18px;width:120px"></div><div class="sk" style="height:26px;width:90px"></div></div>' +
+        [1, 2, 3, 4].map(function() { return '<div style="display:flex;gap:12px;align-items:center"><div class="sk" style="height:32px;width:32px;border-radius:50%"></div><div class="sk" style="height:14px;width:55%"></div></div>'; }).join("") + '</div>';
+    }).join("") + '</div>';
+}
+
+function renderDay() {
+  var v = $("dayView");
+  if (state.error && !state.loaded) {
+    v.innerHTML = '<div class="errblock"><p>No se pudo cargar los registros. ' + esc(state.error) + '</p><button class="btn" data-act="retry">Reintentar</button></div>';
+    return;
+  }
+  if (!state.loaded) { v.innerHTML = skeletonDay(); return; }
+
+  var list = visibleRows().filter(function(r) { return r.fecha === state.selected; })
+    .sort(function(a, b) { return (+a.numero || 0) - (+b.numero || 0); });
+  var can = state.user && state.user.puedeAsistencia;
+
+  var people = 0, marked = 0;
+  list.forEach(function(r) { personas(r).forEach(function(p) { if (esRuta(p[2])) return; people++; if (r.asistencia && r.asistencia[p[0]] && r.asistencia[p[0]].estado) marked++; }); });
+
+  var h = '<h2 class="day-title">' + esc(dayTitle(state.selected)) + (state.selected === state.today ? ' <span class="pill" style="vertical-align:3px">Hoy</span>' : "") + '</h2>';
+  h += '<p class="day-sub">' + (list.length
+    ? list.length + (list.length === 1 ? " cuadrilla" : " cuadrillas") + " · " + people + (people === 1 ? " persona" : " personas")
+    : "Sin cuadrillas registradas") + '</p>';
+  if (state.error) h += '<div class="errblock" style="margin-top:12px"><p>No se pudo actualizar. Última actualización ' + esc($("stamp").textContent.replace("Actualizado ", "")) + '.</p><button class="btn" data-act="retry">Reintentar</button></div>';
+  if (can && list.length) {
+    h += '<div class="meter"><span>Asistencia: ' + marked + ' de ' + people + ' marcadas</span><span class="bar-t"><i style="width:' + (people ? Math.round(marked / people * 100) : 0) + '%"></i></span></div>';
+  }
+
+  if (!list.length) {
+    h += '<div class="empty">No hay cuadrillas registradas el ' + esc(dayTitle(state.selected).toLowerCase()) + '.</div>';
+  } else {
+    h += '<div class="cards' + (state.animate ? " enter" : "") + '">' + list.map(cardHtml).join("") + '</div>';
+  }
+  v.innerHTML = h;
+  state.animate = false;
+}
+
+function personHtml(r, p) {
+  var can = state.user && state.user.puedeAsistencia;
+  var ruta = esRuta(p[2]);
+  var a = (r.asistencia && r.asistencia[p[0]]) || {};
+  var av = ruta ? '<span class="av ghost" aria-hidden="true">–</span>'
+    : '<span class="av" style="--h:' + hue(p[2]) + '" aria-hidden="true">' + esc(initials(p[2])) + '</span>';
+  var nm = '<span class="nm"><b' + (ruta ? ' class="muted"' : "") + '>' + esc(ruta ? "Ruta sin técnico 2" : tc(p[2])) + '</b><span>' + p[1] + '</span></span>';
+  if (!can || ruta) return '<div class="person">' + av + nm + '</div>';
+  var pill = '<span class="pill ' + estadoClass(a.estado) + '">' + (a.estado ? esc(tc(a.estado)) : "Sin marcar") + '</span>';
+  var key = r.id + "|" + p[0], open = state.marking === key;
+  var h = '<button class="person" data-mark="' + esc(key) + '" aria-expanded="' + open + '">' + av + nm + pill + '</button>';
+  if (open) {
+    h += '<div class="mark-panel"><div class="chips">' + state.estados.map(function(e) {
+      return '<button class="chip' + (a.estado === e ? " on " + estadoClass(e) : "") + '" data-asis="' + esc(e) + '" data-id="' + esc(r.id) + '" data-cargo="' + p[0] + '">' + esc(tc(e)) + '</button>';
+    }).join("") + '</div>' +
+      '<div class="mark-meta"><span>' + (a.estado && a.por ? "Marcado por " + esc(tc(a.por)) + (a.cuando ? " · " + esc(a.cuando) : "") : "Aún sin marcar") + '</span>' +
+      (a.estado ? '<button class="btn text" data-asis="" data-id="' + esc(r.id) + '" data-cargo="' + p[0] + '">Quitar marca</button>' : "") + '</div></div>';
+  }
+  return h;
+}
+
+function cardHtml(r) {
+  var open = !!state.openCards[r.id], editing = state.editing === r.id;
+  var h = '<article class="card" data-id="' + esc(r.id) + '"><div class="card-top"><div><h3>Cuadrilla ' + esc(r.numero || "") + '</h3><div class="loc">' + esc(tc(r.sede)) + '</div></div>' +
+    (r.placa ? '<span class="plate" title="Placa del vehículo">' + esc(r.placa) + '</span>' : '<span class="plate none">Sin placa</span>') + '</div>';
+  h += '<div class="roster">' + personas(r).map(function(p) { return personHtml(r, p); }).join("") + '</div>';
+
+  if (editing) {
+    h += '<div class="editbox"><div class="fgrid">';
+    CAMPOS_FORM.forEach(function(f) {
+      var lock = f[0] === "sede" && state.user.rol === "COORDINADOR";
+      h += '<div class="field"><label>' + f[1] + '</label>';
+      if (f[2] === "date") h += '<input data-key="' + f[0] + '" type="date" value="' + esc(r[f[0]]) + '">';
+      else h += '<div class="cb"><input data-key="' + f[0] + '" data-cb="1" type="text" autocomplete="off" value="' + esc(r[f[0]]) + '"' + (lock ? " disabled" : "") + '><div class="cbm"></div></div>';
+      h += '</div>';
+    });
+    h += '</div><div class="actions" style="padding-top:4px"><button class="btn primary" data-act="save" data-id="' + esc(r.id) + '">Guardar cambios</button><button class="btn" data-act="cancel">Cancelar</button></div></div>';
+  } else if (open) {
+    h += '<dl class="detail" style="margin-bottom:0">' +
+      '<div class="kv"><dt>Fecha en campo</dt><dd>' + esc(fmtFecha(r.fecha)) + '</dd></div>' +
+      '<div class="kv"><dt>Sede de operación</dt><dd>' + esc(tc(r.sede)) + '</dd></div>' +
+      '<div class="kv"><dt>Placa</dt><dd class="mono">' + esc(r.placa || "—") + '</dd></div>' +
+      '<div class="kv"><dt>Registrado</dt><dd>' + esc(r.registro || "—") + '</dd></div>' +
+      (r.limite ? '<div class="kv"><dt>Modificable hasta</dt><dd>' + esc(r.limite) + '</dd></div>' : '') + '</dl>' +
+      (r.editable === false ? '<div class="noedit">El plazo de modificación terminó. Solicita el cambio a un supervisor.</div>' : '') +
+      '<div class="actions" style="padding-left:16px;padding-right:16px">' +
+      (state.user.puedeEditar && r.editable !== false ? '<button class="btn" data-act="edit" data-id="' + esc(r.id) + '">' + ico("edit") + 'Editar</button>' : '') +
+      '<button class="btn" data-act="hist" data-id="' + esc(r.id) + '">' + ico("history") + (state.history[r.id] ? "Ocultar historial" : "Historial") + '</button></div>';
+    var hist = state.history[r.id];
+    if (hist) {
+      h += '<div class="hist">' + hist.map(function(x) {
+        return '<div class="h"><b>' + esc(tc(x.campo)) + '</b> · <span class="old">' + esc(x.anterior || "—") + '</span> → ' + esc(x.nuevo || "—") +
+          '<div class="m">' + esc(tc(x.editor)) + ' · ' + esc(x.cuando) + '</div></div>';
+      }).join("") + '<div class="h"><b>Registro inicial</b><div class="m">' + esc(r.registro) + (hist.length ? "" : " · sin modificaciones posteriores") + '</div></div></div>';
+    }
+  }
+  if (!editing) {
+    h += '<div class="card-foot"><button class="btn text" data-card="' + esc(r.id) + '" aria-expanded="' + open + '">' + (open ? "Ocultar detalle" : "Ver detalle") + ico(open ? "up" : "down") + '</button></div>';
+  }
+  return h + '</article>';
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click", function(e) {
+  if (state.view !== "agenda") return;
+  var chip = e.target.closest("[data-asis]");
+  if (chip) return setAsistencia(chip);
+  var btn = e.target.closest("[data-act]");
+  if (btn) return onAction(btn);
+  var mk = e.target.closest("[data-mark]");
+  if (mk) { state.marking = state.marking === mk.dataset.mark ? "" : mk.dataset.mark; return renderDay(); }
+  var card = e.target.closest("[data-card]");
+  if (card) { var id = card.dataset.card; state.openCards[id] = !state.openCards[id]; return renderDay(); }
+  var day = e.target.closest("[data-day]");
+  if (day) { state.selected = day.dataset.day; state.marking = ""; state.editing = null; state.animate = true; render(); }
+});
+
+function setAsistencia(chip) {
+  var id = chip.dataset.id, cargo = chip.dataset.cargo, estado = chip.dataset.asis;
+  chip.disabled = true;
+  api("setAsistencia", [id, cargo, estado], function(res) {
+    var r = state.rows.filter(function(x) { return x.id === id; })[0];
+    if (r) {
+      r.asistencia = r.asistencia || {};
+      if (estado) r.asistencia[cargo] = { estado: estado, por: res.por || state.user.nombre, cuando: res.cuando || "" }; else delete r.asistencia[cargo];
+    }
+    delete state.history[id]; state.marking = ""; toast(estado ? "Asistencia: " + tc(estado) : "Marca quitada"); renderDay();
+  }, function(err) { toast(msg(err)); renderDay(); });
+}
+
+function onAction(btn) {
+  var id = btn.dataset.id, act = btn.dataset.act;
+  if (act === "retry") { state.busy = false; state.error = ""; load(); }
+  else if (act === "edit") {
+    var go = function() { state.editing = id; renderDay(); };
+    if (state.maestros) return go();
+    btn.disabled = true;
+    api("getMaestros", [], function(m) { state.maestros = m; go(); }, function(err) { btn.disabled = false; toast(msg(err)); });
+  }
+  else if (act === "cancel") { state.editing = null; renderDay(); }
+  else if (act === "hist") {
+    if (state.history[id]) { delete state.history[id]; renderDay(); return; }
+    btn.disabled = true;
+    api("getHistorial", [id], function(h) { state.history[id] = h; renderDay(); }, function(err) { btn.disabled = false; toast(msg(err)); });
+  }
+  else if (act === "save") {
+    var card = btn.closest(".card"), cambios = {};
+    card.querySelectorAll("input[data-key]:not([disabled])").forEach(function(i) { cambios[i.dataset.key] = i.value; });
+    btn.disabled = true; btn.textContent = "Guardando…";
+    api("updateRegistro", [id, cambios], function(res) {
+      state.editing = null; delete state.history[id];
+      toast(res.cambios ? "Guardado: " + res.cambios + (res.cambios === 1 ? " cambio registrado" : " cambios registrados") : "Sin cambios");
+      state.busy = false; load(true);
+    }, function(err) { btn.disabled = false; btn.textContent = "Guardar cambios"; toast(msg(err)); });
+  }
+}
+
+/* ---------- desplegables del modo edición (igual que el formulario) ---------- */
+function norm(t) { return String(t || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim(); }
+
+function cargoOk(cargoDB, tipo) {
+  var c = norm(cargoDB);
+  if (tipo === "COORDINADOR") return c.indexOf("COORDINADOR") >= 0;
+  if (tipo === "T1") return c.indexOf("TECNICO 1") >= 0 || c.indexOf("TECNICO1") >= 0 || c.indexOf("T1") >= 0;
+  if (tipo === "T2") return c.indexOf("TECNICO 2") >= 0 || c.indexOf("TECNICO2") >= 0 || c.indexOf("T2") >= 0;
+  if (tipo === "USUARIO") return c.indexOf("USUARIO") >= 0 ||
+    (c.indexOf("COORDINADOR") >= 0 && (c.indexOf("TECNICO 1") >= 0 || c.indexOf("TECNICO1") >= 0));
+  return false;
+}
+
+function opcionesCampo(key, card) {
+  var m = state.maestros || { sedes: [], placas: [], personal: [] };
+  if (key === "sede") return m.sedes;
+  if (key === "placa") return m.placas;
+  var sedeInput = card.querySelector('[data-key="sede"]');
+  var sede = norm(sedeInput ? sedeInput.value : "");
+  var tipo = { coordinador: "COORDINADOR", t1: "T1", t2: "T2", usuario: "USUARIO" }[key];
+  var lista = m.personal.filter(function(p) { return (!sede || norm(p.sede) === sede) && cargoOk(p.cargo, tipo); }).map(function(p) { return p.nombre; });
+  if (key === "t2") lista.push("RUTA SIN TÉCNICO 2");
+  return Array.from(new Set(lista));
+}
+
+function cerrarCombos() { document.querySelectorAll(".cb.open").forEach(function(c) { c.classList.remove("open"); }); }
+
+function pintarCombo(input, todo) {
+  var menu = input.closest(".cb").querySelector(".cbm"), q = todo ? "" : norm(input.value);
+  var ops = opcionesCampo(input.dataset.key, input.closest(".card")).filter(function(o) { return norm(o).indexOf(q) >= 0; });
+  menu.innerHTML = ops.length
+    ? ops.map(function(o) { return '<div class="cbi" data-v="' + esc(o) + '">' + esc(o) + '</div>'; }).join("")
+    : '<div class="cbn">Sin coincidencias. Se conservará el texto escrito.</div>';
+}
+
+function abrirCombo(input) {
+  if (input.disabled) return;
+  cerrarCombos(); pintarCombo(input, true); input.closest(".cb").classList.add("open");
+}
+
+document.addEventListener("focusin", function(e) { if (e.target.matches && e.target.matches("input[data-cb]")) abrirCombo(e.target); });
+document.addEventListener("click", function(e) { if (e.target.matches && e.target.matches("input[data-cb]")) abrirCombo(e.target); });
+document.addEventListener("input", function(e) {
+  if (e.target.matches && e.target.matches("input[data-cb]")) {
+    e.target.value = e.target.value.toUpperCase();
+    e.target.closest(".cb").classList.add("open"); pintarCombo(e.target);
+  }
+});
+
+// Selección con control de scroll vs toque (móvil)
+var cbMoved = false, cbY = 0;
+document.addEventListener("touchstart", function(e) { if (e.target.closest(".cbm")) { cbMoved = false; cbY = e.touches[0].clientY; } }, { passive: true });
+document.addEventListener("touchmove", function(e) { if (e.target.closest(".cbm") && Math.abs(e.touches[0].clientY - cbY) > 6) cbMoved = true; }, { passive: true });
+document.addEventListener("click", function(e) {
+  var item = e.target.closest(".cbi");
+  if (item) {
+    if (cbMoved) { cbMoved = false; return; }
+    var cb = item.closest(".cb");
+    cb.querySelector("input").value = item.dataset.v; cb.classList.remove("open");
+  } else if (!e.target.closest(".cb")) cerrarCombos();
+});
+
+/* ---------- navegación del calendario ---------- */
+function shiftMonth(delta) {
+  state.month += delta;
+  if (state.month < 1) { state.month = 12; state.year--; }
+  if (state.month > 12) { state.month = 1; state.year++; }
+  var t = state.today.split("-"), esHoy = state.today && +t[0] === state.year && +t[1] === state.month;
+  state.selected = esHoy ? state.today : state.year + "-" + pad(state.month) + "-01";
+  state.editing = null; state.marking = ""; state.loaded = false; state.rows = []; state.animate = true;
+  render(); state.busy = false; load();
+}
+
+$("prev").onclick = function() { shiftMonth(-1); };
+$("next").onclick = function() { shiftMonth(1); };
+$("refresh").onclick = function() { state.busy = false; load(); };
+$("sedeFilter").onchange = function() { state.sede = this.value; state.animate = true; render(); };
+$("today").onclick = function() {
+  if (!state.today) return;
+  var p = state.today.split("-"), same = state.year === +p[0] && state.month === +p[1];
+  state.selected = state.today; state.marking = ""; state.animate = true;
+  if (same) { render(); return; }
+  state.year = +p[0]; state.month = +p[1]; state.loaded = false; state.rows = []; render(); state.busy = false; load();
+};
+
+/* ---------- usuarios (solo Jefe de Operaciones) ---------- */
+function setView(v) {
+  state.view = v;
+  $("agendaView").classList.toggle("hidden", v !== "agenda");
+  $("usersView").classList.toggle("hidden", v !== "usuarios");
+  $("configView").classList.toggle("hidden", v !== "config");
+  $("btnUsuarios").textContent = v === "usuarios" ? "Volver a la agenda" : "Usuarios";
+  $("btnConfig").textContent = v === "config" ? "Volver a la agenda" : "Plazos";
+  $("btnUsuarios").classList.toggle("on", v === "usuarios");
+  $("btnConfig").classList.toggle("on", v === "config");
+}
+
+$("btnUsuarios").onclick = function() {
+  if (state.view === "usuarios") { setView("agenda"); render(); return; }
+  setView("usuarios"); $("usersView").innerHTML = '<p style="color:var(--ink-3)">Cargando usuarios…</p>';
+  loadUsers();
+};
+
+$("btnConfig").onclick = function() {
+  if (state.view === "config") { setView("agenda"); render(); return; }
+  setView("config"); $("configView").innerHTML = '<p style="color:var(--ink-3)">Cargando…</p>';
+  api("getConfig", [], function(c) { renderConfig(c); });
+};
+
+/* ---------- plazo de modificación (solo Jefe de Operaciones) ---------- */
+function renderConfig(c) {
+  $("configView").innerHTML = '<h2>Plazo de modificación</h2>' +
+    '<p style="margin:0 0 16px;color:var(--ink-2)">Los coordinadores pueden corregir una cuadrilla hasta la hora indicada del día de la <b>fecha en campo</b> ' +
+    '(registran el día anterior y corrigen hasta la mañana siguiente). Pasado el plazo, solo un supervisor o el jefe pueden modificarla. ' +
+    'Esto aplica al panel y a la corrección desde el formulario.</p>' +
+    '<div class="panel">' +
+    '<div class="field"><label for="cHora">Hora límite (del día de la fecha en campo)</label><input id="cHora" type="time" value="' + esc(c.horaLimite) + '"></div>' +
+    '<div class="field"><label for="cMargen">Margen mínimo después de registrar (minutos)</label><input id="cMargen" type="number" min="0" max="720" inputmode="numeric" value="' + esc(c.margenMinutos) + '">' +
+    '<span style="font-size:12px;color:var(--ink-3)">Si un coordinador registra cuando el plazo ya venció, igual puede corregir durante este tiempo. Use 0 para no dar margen.</span></div>' +
+    '<div class="actions" style="padding:0"><button class="btn primary" id="cSave">Guardar plazo</button></div></div>';
+  $("cSave").onclick = function() {
+    var btn = this; btn.disabled = true;
+    api("saveConfig", [{ horaLimite: $("cHora").value, margenMinutos: $("cMargen").value }],
+      function() { btn.disabled = false; toast("Plazo guardado"); },
+      function(err) { btn.disabled = false; toast(msg(err)); });
+  };
+}
+
+function loadUsers() { api("listUsuarios", [], function(list) { state.users = list; renderUsers(); }); }
+
+function renderUsers() {
+  var u = state.editUser, nuevo = !(u && u.existe);
+  var h = '<h2>Usuarios del panel</h2><p style="margin:0 0 16px;color:var(--ink-2)">Cada persona ingresa con su DNI y un PIN. El PIN solo se muestra al crearlo.</p>' +
+    '<div class="panel"><div class="sec" style="margin-top:0">' + (nuevo ? "Nuevo usuario" : "Editar usuario") + '</div>' +
+    '<div class="field"><label>DNI</label><input id="uDni" inputmode="numeric" maxlength="8" value="' + esc(u ? u.dni : "") + '"' + (nuevo ? "" : " disabled") + '></div>' +
+    '<div class="field"><label>Nombre completo</label><input id="uNombre" data-key="x" value="' + esc(u ? u.nombre : "") + '"></div>' +
+    '<div class="field"><label>Rol</label><select id="uRol">' + ROLES.map(function(r) { return '<option value="' + r + '"' + (u && u.rol === r ? " selected" : "") + '>' + tc(r) + '</option>'; }).join("") + '</select></div>' +
+    '<div class="field"><label>Sede (obligatoria para coordinador; varias separadas por coma)</label><input id="uSede" data-key="x" value="' + esc(u ? u.sede : "") + '"></div>' +
+    '<div class="field"><label>' + (nuevo ? "PIN (4 a 6 dígitos)" : "PIN nuevo (vacío = no cambiar)") + '</label><input id="uPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password">' +
+    '<div><button type="button" class="btn text" id="uGen" style="padding-left:0">Generar PIN aleatorio</button></div></div>' +
+    '<div class="field"><label><input type="checkbox" id="uActivo"' + (!u || u.activo ? " checked" : "") + '>Activo</label></div>' +
+    '<div class="actions" style="padding:0"><button class="btn primary" id="uSave">Guardar</button>' + (u ? '<button class="btn" id="uCancel">Cancelar</button>' : "") + '</div></div>' +
+    '<div class="sec">Usuarios (' + state.users.length + ')</div>' +
+    (state.users.length ? state.users.map(function(x) {
+      return '<div class="urow"><span class="av" style="--h:' + hue(x.nombre) + '">' + esc(initials(x.nombre)) + '</span><div class="n"><b>' + esc(tc(x.nombre)) + '</b><small>' +
+        esc(x.dni) + ' · ' + esc(tc(x.rol)) + (x.sede ? " · " + esc(tc(x.sede)) : "") + (x.activo ? "" : " · Inactivo") + '</small></div>' +
+        '<button class="btn" data-uedit="' + esc(x.dni) + '">Editar</button></div>';
+    }).join("") : '<div class="empty">Aún no hay usuarios.</div>');
+  $("usersView").innerHTML = h;
+  $("uSave").onclick = saveUser;
+  $("uGen").onclick = function() {
+    var n = new Uint32Array(1); crypto.getRandomValues(n);
+    var pin = String(1000 + (n[0] % 9000));
+    $("uPin").type = "text"; $("uPin").value = pin;
+    toast("PIN generado: " + pin + ". Anótalo y entrégalo; luego no se puede ver.");
+  };
+  if ($("uCancel")) $("uCancel").onclick = function() { state.editUser = null; renderUsers(); };
+  document.querySelectorAll("[data-uedit]").forEach(function(b) {
+    b.onclick = function() {
+      var x = state.users.filter(function(y) { return y.dni === b.dataset.uedit; })[0];
+      state.editUser = Object.assign({ existe: true }, x); renderUsers(); window.scrollTo(0, 0);
+    };
+  });
+}
+
+function saveUser() {
+  var data = { dni: $("uDni").value, nombre: $("uNombre").value, rol: $("uRol").value, sede: $("uSede").value, pin: $("uPin").value, activo: $("uActivo").checked };
+  $("uSave").disabled = true;
+  api("saveUsuario", [data], function() { toast("Usuario guardado"); state.editUser = null; loadUsers(); },
+    function(err) { $("uSave").disabled = false; toast(msg(err)); });
+}
+
+/* ---------- arranque ---------- */
+(function init() {
+  $("barBrand").innerHTML = MARK + '<div><span class="t">Registro de cuadrillas</span></div>';
+  $("loginBrand").innerHTML = MARK + '<div><span class="t">Registro de cuadrillas</span></div>';
+  $("refresh").innerHTML = ico("refresh"); $("btnSalir").innerHTML = ico("logout");
+  $("prev").innerHTML = ico("left"); $("next").innerHTML = ico("right");
+
+  var t = readToken();
+  if (!t) return showLogin("");
+  state.token = t;
+  callServer("getSession", [t]).then(function(user) { enterApp(user); }).catch(function() { logout(""); });
+})();
+
+// Actualización automática cada 60 s (no interrumpe edición ni otra vista)
+setInterval(function() {
+  if (state.token && state.view === "agenda" && !state.editing && !state.marking && !document.hidden) load(true);
+}, 60000);
+</script>
 </body>
 </html>
