@@ -94,6 +94,11 @@
   .who b { display: block; font-weight: 500; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .who span { font-size: 12px; color: var(--ink-3); }
   .stamp { font-size: 12px; color: var(--ink-3); margin-right: 2px; white-space: nowrap; }
+  .bar-nav { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
+  .btn.sm { height: 34px; font-size: 13px; padding: 0 12px; text-decoration: none; color: var(--ink); }
+  a.btn { text-decoration: none; color: var(--ink); }
+  .btn.sm.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .noedit { margin: 4px 16px 12px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); font-size: 13px; }
 
   /* ---------- estructura ---------- */
   .shell { max-width: 1120px; margin: 0 auto; padding: 20px 16px 64px; display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
@@ -130,7 +135,7 @@
   .meter .bar-t { flex: 1; max-width: 220px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
   .meter .bar-t i { display: block; height: 100%; background: var(--accent); transition: width 250ms var(--ease); }
   .cards { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
-  .cards.enter .card { animation: rise 220ms var(--ease) both; }
+  .cards.enter .card { animation: rise 220ms var(--ease) backwards; }
   .cards.enter .card:nth-child(2) { animation-delay: 40ms; } .cards.enter .card:nth-child(3) { animation-delay: 80ms; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -141,7 +146,8 @@
   .sk-card { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
   /* ---------- tarjeta de cuadrilla ---------- */
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; position: relative; }
+  .card:focus-within { z-index: 31; }
   .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 8px; }
   .card-top h3 { margin: 0; font-size: 16px; font-weight: 600; }
   .card-top .loc { color: var(--ink-3); font-size: 13px; margin-top: 1px; }
@@ -165,7 +171,7 @@
   .pill.ok { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
   .pill.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
   .pill.bad { background: var(--bad-bg); color: var(--bad-ink); border-color: transparent; }
-  .mark-panel { margin: 0 8px 6px 52px; padding: 10px 12px 12px; background: var(--surface-2); border-radius: 8px; animation: rise 160ms var(--ease) both; }
+  .mark-panel { margin: 0 8px 6px 52px; padding: 10px 12px 12px; background: var(--surface-2); border-radius: 8px; animation: rise 160ms var(--ease) backwards; }
   .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .chip { height: 40px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 13px; font-weight: 500;
     transition: transform 140ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease); }
@@ -197,7 +203,7 @@
   .cb { position: relative; }
   .cbm { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: var(--surface);
     border: 1px solid var(--line-strong); border-radius: 8px; z-index: 30; box-shadow: 0 8px 24px -6px rgba(0,0,0,.22); touch-action: pan-y; -webkit-overflow-scrolling: touch; }
-  .cb.open .cbm { display: block; animation: rise 150ms var(--ease) both; }
+  .cb.open .cbm { display: block; animation: rise 150ms var(--ease) backwards; }
   .cbi { padding: 11px 12px; font-size: 13px; font-weight: 500; text-transform: uppercase; cursor: pointer; border-bottom: 1px solid var(--line); user-select: none; }
   .cbi:last-child { border-bottom: 0; }
   .cbi:hover, .cbi:active { background: var(--accent-soft); color: var(--accent); }
@@ -221,7 +227,8 @@
     .stamp, .who span { display: none; }
   }
   @media (max-width: 560px) {
-    .bar { padding: 6px 12px; }
+    .bar { padding: 6px 12px; flex-wrap: wrap; }
+    .bar-nav { order: 3; width: 100%; flex-basis: 100%; justify-content: flex-start; overflow-x: auto; padding-bottom: 4px; }
     .brand .s, .who { display: none; }
     .shell { padding: 12px 12px 64px; }
     .panel { padding: 12px; }
@@ -260,9 +267,13 @@
       <span class="stamp" id="stamp"></span>
       <button class="icon-btn" id="refresh" title="Actualizar" aria-label="Actualizar"></button>
       <div class="who"><b id="whoName">--</b><span id="whoRol"></span></div>
-      <button class="btn hidden" id="btnUsuarios">Usuarios</button>
       <button class="icon-btn" id="btnSalir" title="Salir" aria-label="Salir"></button>
     </div>
+    <nav class="bar-nav" aria-label="Secciones">
+      <a class="btn sm" id="linkNuevo" href="index.html">Nuevo registro</a>
+      <button class="btn sm hidden" id="btnUsuarios">Usuarios</button>
+      <button class="btn sm hidden" id="btnConfig">Plazos</button>
+    </nav>
   </header>
 
   <main class="shell" id="agendaView">
@@ -286,6 +297,7 @@
   </main>
 
   <main class="narrow hidden" id="usersView"></main>
+  <main class="narrow hidden" id="configView"></main>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -326,7 +338,8 @@ function $(id) { return document.getElementById(id); }
 function pad(n) { return ("0" + n).slice(-2); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
   return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
-function tc(s) { return String(s || "").toLowerCase().replace(/(^|[\s\-\/(])([a-záéíóúñü])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
+function tc(s) { return String(s || "").toLowerCase().replace(/(^|[\s\-\/(])([a-záéíóúñü])/g, function(m, a, b) { return a + b.toUpperCase(); })
+  .replace(/ (De|Del|La|El|Y|Sin) /g, function(m, w) { return " " + w.toLowerCase() + " "; }); }
 function fmtFecha(iso) { var p = iso.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso; }
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toast._t); toast._t = setTimeout(function() { t.classList.remove("show"); }, 2800); }
@@ -375,6 +388,7 @@ function enterApp(user) {
   $("whoName").textContent = tc(user.nombre);
   $("whoRol").textContent = tc(user.rol) + (user.rol === "COORDINADOR" && user.sede ? " · " + tc(user.sede) : "");
   $("btnUsuarios").classList.toggle("hidden", !user.puedeUsuarios);
+  $("btnConfig").classList.toggle("hidden", !user.puedeUsuarios);
   setView("agenda");
   load();
 }
@@ -550,9 +564,11 @@ function cardHtml(r) {
       '<div class="kv"><dt>Fecha en campo</dt><dd>' + esc(fmtFecha(r.fecha)) + '</dd></div>' +
       '<div class="kv"><dt>Sede de operación</dt><dd>' + esc(tc(r.sede)) + '</dd></div>' +
       '<div class="kv"><dt>Placa</dt><dd class="mono">' + esc(r.placa || "—") + '</dd></div>' +
-      '<div class="kv"><dt>Registrado</dt><dd>' + esc(r.registro || "—") + '</dd></div></dl>' +
+      '<div class="kv"><dt>Registrado</dt><dd>' + esc(r.registro || "—") + '</dd></div>' +
+      (r.limite ? '<div class="kv"><dt>Modificable hasta</dt><dd>' + esc(r.limite) + '</dd></div>' : '') + '</dl>' +
+      (r.editable === false ? '<div class="noedit">El plazo de modificación terminó. Solicita el cambio a un supervisor.</div>' : '') +
       '<div class="actions" style="padding-left:16px;padding-right:16px">' +
-      (state.user.puedeEditar ? '<button class="btn" data-act="edit" data-id="' + esc(r.id) + '">' + ico("edit") + 'Editar</button>' : '') +
+      (state.user.puedeEditar && r.editable !== false ? '<button class="btn" data-act="edit" data-id="' + esc(r.id) + '">' + ico("edit") + 'Editar</button>' : '') +
       '<button class="btn" data-act="hist" data-id="' + esc(r.id) + '">' + ico("history") + (state.history[r.id] ? "Ocultar historial" : "Historial") + '</button></div>';
     var hist = state.history[r.id];
     if (hist) {
@@ -650,8 +666,8 @@ function opcionesCampo(key, card) {
 
 function cerrarCombos() { document.querySelectorAll(".cb.open").forEach(function(c) { c.classList.remove("open"); }); }
 
-function pintarCombo(input) {
-  var menu = input.closest(".cb").querySelector(".cbm"), q = norm(input.value);
+function pintarCombo(input, todo) {
+  var menu = input.closest(".cb").querySelector(".cbm"), q = todo ? "" : norm(input.value);
   var ops = opcionesCampo(input.dataset.key, input.closest(".card")).filter(function(o) { return norm(o).indexOf(q) >= 0; });
   menu.innerHTML = ops.length
     ? ops.map(function(o) { return '<div class="cbi" data-v="' + esc(o) + '">' + esc(o) + '</div>'; }).join("")
@@ -660,7 +676,7 @@ function pintarCombo(input) {
 
 function abrirCombo(input) {
   if (input.disabled) return;
-  cerrarCombos(); pintarCombo(input); input.closest(".cb").classList.add("open");
+  cerrarCombos(); pintarCombo(input, true); input.closest(".cb").classList.add("open");
 }
 
 document.addEventListener("focusin", function(e) { if (e.target.matches && e.target.matches("input[data-cb]")) abrirCombo(e.target); });
@@ -711,10 +727,13 @@ $("today").onclick = function() {
 /* ---------- usuarios (solo Jefe de Operaciones) ---------- */
 function setView(v) {
   state.view = v;
-  var agenda = v === "agenda";
-  $("agendaView").classList.toggle("hidden", !agenda);
-  $("usersView").classList.toggle("hidden", agenda);
-  $("btnUsuarios").textContent = agenda ? "Usuarios" : "Volver a la agenda";
+  $("agendaView").classList.toggle("hidden", v !== "agenda");
+  $("usersView").classList.toggle("hidden", v !== "usuarios");
+  $("configView").classList.toggle("hidden", v !== "config");
+  $("btnUsuarios").textContent = v === "usuarios" ? "Volver a la agenda" : "Usuarios";
+  $("btnConfig").textContent = v === "config" ? "Volver a la agenda" : "Plazos";
+  $("btnUsuarios").classList.toggle("on", v === "usuarios");
+  $("btnConfig").classList.toggle("on", v === "config");
 }
 
 $("btnUsuarios").onclick = function() {
@@ -722,6 +741,31 @@ $("btnUsuarios").onclick = function() {
   setView("usuarios"); $("usersView").innerHTML = '<p style="color:var(--ink-3)">Cargando usuarios…</p>';
   loadUsers();
 };
+
+$("btnConfig").onclick = function() {
+  if (state.view === "config") { setView("agenda"); render(); return; }
+  setView("config"); $("configView").innerHTML = '<p style="color:var(--ink-3)">Cargando…</p>';
+  api("getConfig", [], function(c) { renderConfig(c); });
+};
+
+/* ---------- plazo de modificación (solo Jefe de Operaciones) ---------- */
+function renderConfig(c) {
+  $("configView").innerHTML = '<h2>Plazo de modificación</h2>' +
+    '<p style="margin:0 0 16px;color:var(--ink-2)">Los coordinadores pueden corregir una cuadrilla hasta la hora indicada del día de la <b>fecha en campo</b> ' +
+    '(registran el día anterior y corrigen hasta la mañana siguiente). Pasado el plazo, solo un supervisor o el jefe pueden modificarla. ' +
+    'Esto aplica al panel y a la corrección desde el formulario.</p>' +
+    '<div class="panel">' +
+    '<div class="field"><label for="cHora">Hora límite (del día de la fecha en campo)</label><input id="cHora" type="time" value="' + esc(c.horaLimite) + '"></div>' +
+    '<div class="field"><label for="cMargen">Margen mínimo después de registrar (minutos)</label><input id="cMargen" type="number" min="0" max="720" inputmode="numeric" value="' + esc(c.margenMinutos) + '">' +
+    '<span style="font-size:12px;color:var(--ink-3)">Si un coordinador registra cuando el plazo ya venció, igual puede corregir durante este tiempo. Use 0 para no dar margen.</span></div>' +
+    '<div class="actions" style="padding:0"><button class="btn primary" id="cSave">Guardar plazo</button></div></div>';
+  $("cSave").onclick = function() {
+    var btn = this; btn.disabled = true;
+    api("saveConfig", [{ horaLimite: $("cHora").value, margenMinutos: $("cMargen").value }],
+      function() { btn.disabled = false; toast("Plazo guardado"); },
+      function(err) { btn.disabled = false; toast(msg(err)); });
+  };
+}
 
 function loadUsers() { api("listUsuarios", [], function(list) { state.users = list; renderUsers(); }); }
 
