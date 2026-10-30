@@ -3,43 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <title>Registro de cuadrillas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ground: #f3f3f0; --surface: #ffffff; --surface-2: #f8f8f6;
-    --line: #e3e3de; --line-strong: #cfcfc9;
-    --ink: #17181a; --ink-2: #4d5056; --ink-3: #686b72;
-    --accent: #0a4aa6; --accent-soft: rgba(10,74,166,.09);
-    --ok-bg: #e2f0e6; --ok-ink: #1b5a35;
-    --warn-bg: #faecd0; --warn-ink: #774800;
-    --bad-bg: #f8dedb; --bad-ink: #86201a;
+    --ground: #edf1f8; --surface: #ffffff; --surface-2: #f7f9fc;
+    --line: #e3e8ef; --line-strong: #cdd5e0;
+    --ink: #101828; --ink-2: #475467; --ink-3: #5d6778;
+    --accent: #0f5bd8; --accent-strong: #0b47ad; --accent-soft: rgba(15,91,216,.09);
+    --brand: #0a2a66; --brand-2: #0f5bd8; --teal: #0f9d8a; --teal-ink: #0b6f63; --teal-soft: #d5f3ee; --amber-soft: #fdecc8; --amber-ink: #8a4b00; --rose-soft: #fde0e6; --rose-ink: #a3143a; --blue-soft: #dbe8ff; --blue-ink: #1b46a8;
+    --ok-bg: #e3f4ea; --ok-ink: #14633a;
+    --warn-bg: #fdf0d5; --warn-ink: #7a4a00;
+    --bad-bg: #fbe4e1; --bad-ink: #8f1d14;
     --plate-bg: #ffffff;
     --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
     color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ground: #0f0f10; --surface: #181819; --surface-2: #1f1f21;
-      --line: #2a2a2c; --line-strong: #3b3b3e;
-      --ink: #ececed; --ink-2: #b0b0b4; --ink-3: #909095;
-      --accent: #7db0ff; --accent-soft: rgba(125,176,255,.13);
-      --ok-bg: #16301f; --ok-ink: #93d9ab;
-      --warn-bg: #372b10; --warn-ink: #ebc678;
-      --bad-bg: #3b1d1a; --bad-ink: #f4a69e;
-      --plate-bg: #232325;
-      color-scheme: dark;
-    }
-  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45;
     font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
-  ::selection { background: var(--accent); color: var(--surface); }
+  ::selection { background: var(--accent); color: #ffffff; }
   * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
   .hidden { display: none !important; }
@@ -53,8 +41,8 @@
   .btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
   .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: .5; pointer-events: none; }
-  .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-  .btn.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
   .btn.text { border-color: transparent; background: transparent; color: var(--accent); padding: 0 8px; }
   .btn.text:hover { background: var(--accent-soft); }
   .btn.full { width: 100%; height: 44px; font-size: 14px; }
@@ -97,7 +85,7 @@
   .bar-nav { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
   .btn.sm { height: 34px; font-size: 13px; padding: 0 12px; text-decoration: none; color: var(--ink); }
   a.btn { text-decoration: none; color: var(--ink); }
-  .btn.sm.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .btn.sm.on { background: var(--accent); color: #ffffff; border-color: var(--accent); }
   .noedit { margin: 4px 16px 12px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-ink); font-size: 13px; }
 
   /* ---------- estructura ---------- */
@@ -118,12 +106,12 @@
   .cell.wk { color: var(--ink-3); }
   .cell.today .n { color: var(--accent); font-weight: 600; box-shadow: 0 0 0 1.5px var(--accent); }
   .cell .n { min-width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; padding: 0 2px; }
-  .cell.sel { background: var(--ink); color: var(--surface); }
-  .cell.sel.wk { color: var(--surface); }
-  .cell.sel .n { box-shadow: none; color: var(--surface); }
+  .cell.sel { background: var(--accent); color: #ffffff; }
+  .cell.sel.wk { color: #ffffff; }
+  .cell.sel .n { box-shadow: none; color: #ffffff; }
   .dots { display: flex; gap: 3px; height: 5px; }
   .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-  .cell.sel .dots i { background: var(--surface); }
+  .cell.sel .dots i { background: #ffffff; }
   .cal-foot { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
   .cal-foot .sum { font-size: 13px; color: var(--ink-2); }
   .cal-foot select { height: 38px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 0 10px; font: inherit; }
@@ -148,7 +136,15 @@
   /* ---------- tarjeta de cuadrilla ---------- */
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; position: relative; }
   .card:focus-within { z-index: 31; }
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 8px; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 64px; padding: 14px 16px; border: 0; background: transparent; text-align: left; border-radius: 12px;
+    transition: background-color 150ms var(--ease); }
+  .card-top:hover { background: var(--surface-2); }
+  .card-top:active { background: var(--accent-soft); }
+  .card-top .right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .card-top .chev { color: var(--ink-3); transition: transform 200ms var(--ease); display: inline-flex; }
+  .card-top[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .card.open .card-top { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .card-body { border-top: 1px solid var(--line); padding-top: 8px; }
   .card-top h3 { margin: 0; font-size: 16px; font-weight: 600; }
   .card-top .loc { color: var(--ink-3); font-size: 13px; margin-top: 1px; }
   .plate { font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: .08em; padding: 3px 10px; border: 1.5px solid var(--ink); border-radius: 6px;
@@ -161,7 +157,6 @@
   button.person:active { transform: scale(0.985); }
   .av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; flex-shrink: 0;
     background: hsl(var(--h) 45% 89%); color: hsl(var(--h) 45% 26%); }
-  @media (prefers-color-scheme: dark) { .av { background: hsl(var(--h) 28% 22%); color: hsl(var(--h) 55% 80%); } }
   .av.ghost { background: transparent; border: 1px dashed var(--line-strong); color: var(--ink-3); }
   .person .nm { flex: 1; min-width: 0; }
   .person .nm b { display: block; font-weight: 500; font-size: 14px; overflow-wrap: anywhere; }
@@ -243,6 +238,71 @@
     .kv { grid-template-columns: 112px 1fr; }
   }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition-duration: 1ms !important; } }
+
+  /* ===== Capa visual: más color en lo importante, datos más claros ===== */
+  html, body { background: var(--ground); }
+  .bar { background: var(--brand); border-bottom: 0; color: #fff; box-shadow: 0 6px 18px -10px rgba(10,42,102,.7); }
+  .brand .t, .brand svg.mark { color: #fff; }
+  .brand svg.mark circle { fill: #7fb2ff; } .brand svg.mark path:not(:first-child) { stroke: #7fb2ff; }
+  .bar .btn, .bar a.btn { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); }
+  .bar .btn:hover, .bar a.btn:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.55); }
+  .bar .btn.sm.on { background: #fff; color: var(--brand); border-color: #fff; }
+  .bar .icon-btn { color: rgba(255,255,255,.85); } .bar .icon-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .bar .stamp, .bar .who span, .bar .today span { color: rgba(255,255,255,.7); }
+  .bar .who b, .bar .today b { color: #fff; }
+  .btn.primary { box-shadow: 0 8px 18px -10px rgba(15,91,216,.9); }
+  .panel, .card { box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 18px -14px rgba(16,24,40,.25); }
+  .num { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: linear-gradient(160deg, var(--brand-2), var(--brand)); color: #fff; box-shadow: 0 6px 14px -8px rgba(10,42,102,.8); }
+  .num svg { width: 20px; height: 20px; }
+  .lt { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .plate { background: #fffdf2; border-color: var(--brand); color: var(--brand); box-shadow: inset 4px 0 0 var(--brand-2); padding-left: 14px; }
+  .pin { display: inline-flex; align-items: center; gap: 4px; }
+  .pin svg { width: 13px; height: 13px; }
+  .role-COORDINADOR { --rb: var(--blue-soft); --ri: var(--blue-ink); }
+  .role-T1 { --rb: var(--teal-soft); --ri: var(--teal-ink); }
+  .role-T2 { --rb: var(--amber-soft); --ri: var(--amber-ink); }
+  .role-USUARIO { --rb: var(--rose-soft); --ri: var(--rose-ink); }
+
+  .av[class*="role-"] { background: var(--rb); color: var(--ri); }
+  .person .nm b { font-weight: 600; font-size: 15px; }
+  .person .nm span { font-weight: 500; color: var(--ri, var(--ink-3)); font-size: 12px; }
+  .cell.has:not(.sel) { background: var(--accent-soft); }
+  .cell .dots i { background: var(--teal); }
+  .cell.today:not(.sel) .n { background: #fff; }
+  .cal-head h2 { font-weight: 700; color: var(--brand); }
+  .hero { background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 115%); color: #fff; border-radius: 16px; padding: 18px 20px; box-shadow: 0 14px 28px -18px rgba(10,42,102,.85); }
+  .hero h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .hero .pill-hoy { display: inline-block; vertical-align: 4px; margin-left: 8px; background: #fff; color: var(--brand); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 12px; }
+  .hero .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .hero .st { background: rgba(255,255,255,.15); border-radius: 12px; padding: 8px 14px; min-width: 96px; flex: 0 1 auto; }
+  @media (max-width: 560px) { .hero { padding: 16px; } .hero h2 { font-size: 21px; } .hero .stats { gap: 6px; } .hero .st { flex: 1; min-width: 0; padding: 8px 10px; } .hero .st b { font-size: 20px; } .hero .st span { font-size: 11px; } }
+  .hero .st b { display: block; font-size: 22px; font-weight: 600; line-height: 1.1; }
+  .hero .st span { font-size: 12px; opacity: .85; }
+  .hero .meter { margin-top: 14px; color: #fff; font-size: 13px; }
+  .hero .meter .bar-t { background: rgba(255,255,255,.25); height: 6px; border-radius: 3px; max-width: 260px; }
+  .hero .meter .bar-t i { background: #5eead4; }
+  .hero .meter.done .bar-t i { background: #4ade80; }
+  .hero .vacio { margin: 8px 0 0; opacity: .85; }
+  .cards { margin-top: 16px; }
+  .card.open { border-color: #b9cdf6; }
+  .card-top:hover { background: #f3f7ff; }
+  .pill { font-weight: 600; }
+  .pill.ok, .pill.warn, .pill.bad, .pill.info { padding-left: 8px; }
+  .pill.ok::before, .pill.warn::before, .pill.bad::before, .pill.info::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .pill.ok { background: #d9f5e3; color: #0f6a37; }
+  .pill.warn { background: var(--amber-soft); color: var(--amber-ink); }
+  .pill.bad { background: var(--rose-soft); color: var(--rose-ink); }
+  .pill.info { background: var(--blue-soft); color: var(--blue-ink); }
+  .chip { font-weight: 600; }
+  .chip.on.ok { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .chip.on.warn { background: #d97706; color: #fff; border-color: #d97706; }
+  .chip.on.bad { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .chip.on.info { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mark-panel { background: #f3f7ff; }
+  .kv dt { color: var(--ink-2); font-weight: 500; } .kv dd { font-weight: 600; }
+  .detail { margin-top: 4px; }
+  .noedit { background: var(--amber-soft); color: var(--amber-ink); font-weight: 500; }
+  .stamp { opacity: 1; }
 </style>
 </head>
 <body>
@@ -322,6 +382,8 @@ var ICONS = {
   down: '<path d="m6 9 6 6 6-6"/>', up: '<path d="m18 15-6-6-6 6"/>',
   edit: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
   history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   check: '<path d="M20 6 9 17l-5-5"/>', plus: '<path d="M5 12h14"/><path d="M12 5v14"/>'
 };
 function ico(n) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[n] + '</svg>'; }
@@ -457,7 +519,7 @@ function renderCalendar() {
     var dow = new Date(state.year, state.month - 1, d).getDay();
     var c = byDay[key] || 0, dots = "";
     for (var k = 0; k < Math.min(c, 4); k++) dots += "<i></i>";
-    html += '<button class="cell' + (dow === 0 || dow === 6 ? " wk" : "") + (key === state.today ? " today" : "") + (key === state.selected ? " sel" : "") +
+    html += '<button class="cell' + (c ? " has" : "") + (dow === 0 || dow === 6 ? " wk" : "") + (key === state.today ? " today" : "") + (key === state.selected ? " sel" : "") +
       '" data-day="' + key + '" aria-label="' + d + ' de ' + MESES[state.month - 1] + (c ? ", " + c + " cuadrilla" + (c > 1 ? "s" : "") : "") + '"' +
       (key === state.selected ? ' aria-current="date"' : "") + '><span class="n">' + d + '</span><span class="dots">' + dots + '</span></button>';
   }
@@ -474,7 +536,7 @@ function personas(r) {
   return p.filter(function(x) { return x[2]; });
 }
 function esRuta(n) { return /^RUTA SIN/.test(n); }
-function estadoClass(e) { return e === "ASISTIÓ" ? "ok" : (e === "TARDE" || e === "PERMISO") ? "warn" : e === "FALTÓ" ? "bad" : ""; }
+function estadoClass(e) { return e === "ASISTIÓ" ? "ok" : e === "TARDE" ? "warn" : e === "PERMISO" ? "info" : e === "FALTÓ" ? "bad" : ""; }
 
 function dayTitle(key) {
   var p = key.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
@@ -504,14 +566,18 @@ function renderDay() {
   var people = 0, marked = 0;
   list.forEach(function(r) { personas(r).forEach(function(p) { if (esRuta(p[2])) return; people++; if (r.asistencia && r.asistencia[p[0]] && r.asistencia[p[0]].estado) marked++; }); });
 
-  var h = '<h2 class="day-title">' + esc(dayTitle(state.selected)) + (state.selected === state.today ? ' <span class="pill" style="vertical-align:3px">Hoy</span>' : "") + '</h2>';
-  h += '<p class="day-sub">' + (list.length
-    ? list.length + (list.length === 1 ? " cuadrilla" : " cuadrillas") + " · " + people + (people === 1 ? " persona" : " personas")
-    : "Sin cuadrillas registradas") + '</p>';
-  if (state.error) h += '<div class="errblock" style="margin-top:12px"><p>No se pudo actualizar. Última actualización ' + esc($("stamp").textContent.replace("Actualizado ", "")) + '.</p><button class="btn" data-act="retry">Reintentar</button></div>';
-  if (can && list.length) {
-    h += '<div class="meter"><span>Asistencia: ' + marked + ' de ' + people + ' marcadas</span><span class="bar-t"><i style="width:' + (people ? Math.round(marked / people * 100) : 0) + '%"></i></span></div>';
+  var cerrado = can && people > 0 && marked === people;
+  var h = '<div class="hero"><h2>' + esc(dayTitle(state.selected)) + (state.selected === state.today ? '<span class="pill-hoy">Hoy</span>' : "") + '</h2>';
+  if (list.length) {
+    h += '<div class="stats"><div class="st"><b>' + list.length + '</b><span>' + (list.length === 1 ? "cuadrilla" : "cuadrillas") + '</span></div>' +
+      '<div class="st"><b>' + people + '</b><span>' + (people === 1 ? "persona" : "personas") + '</span></div>' +
+      (can ? '<div class="st"><b>' + marked + '/' + people + '</b><span>marcadas</span></div>' : '') + '</div>';
+    if (can) h += '<div class="meter' + (cerrado ? " done" : "") + '"><span>' + (cerrado ? "Asistencia completa" : "Asistencia del día") + '</span><span class="bar-t"><i style="width:' + (people ? Math.round(marked / people * 100) : 0) + '%"></i></span></div>';
+  } else {
+    h += '<p class="vacio">Sin cuadrillas registradas este día.</p>';
   }
+  h += '</div>';
+  if (state.error) h += '<div class="errblock" style="margin-top:12px"><p>No se pudo actualizar. Última actualización ' + esc($("stamp").textContent.replace("Actualizado ", "")) + '.</p><button class="btn" data-act="retry">Reintentar</button></div>';
 
   if (!list.length) {
     h += '<div class="empty">No hay cuadrillas registradas el ' + esc(dayTitle(state.selected).toLowerCase()) + '.</div>';
@@ -527,8 +593,8 @@ function personHtml(r, p) {
   var ruta = esRuta(p[2]);
   var a = (r.asistencia && r.asistencia[p[0]]) || {};
   var av = ruta ? '<span class="av ghost" aria-hidden="true">–</span>'
-    : '<span class="av" style="--h:' + hue(p[2]) + '" aria-hidden="true">' + esc(initials(p[2])) + '</span>';
-  var nm = '<span class="nm"><b' + (ruta ? ' class="muted"' : "") + '>' + esc(ruta ? "Ruta sin técnico 2" : tc(p[2])) + '</b><span>' + p[1] + '</span></span>';
+    : '<span class="av role-' + p[0] + '" aria-hidden="true">' + esc(initials(p[2])) + '</span>';
+  var nm = '<span class="nm role-' + p[0] + '"><b' + (ruta ? ' class="muted"' : "") + '>' + esc(ruta ? "Ruta sin técnico 2" : tc(p[2])) + '</b><span>' + p[1] + '</span></span>';
   if (!can || ruta) return '<div class="person">' + av + nm + '</div>';
   var pill = '<span class="pill ' + estadoClass(a.estado) + '">' + (a.estado ? esc(tc(a.estado)) : "Sin marcar") + '</span>';
   var key = r.id + "|" + p[0], open = state.marking === key;
@@ -544,10 +610,16 @@ function personHtml(r, p) {
 }
 
 function cardHtml(r) {
-  var open = !!state.openCards[r.id], editing = state.editing === r.id;
-  var h = '<article class="card" data-id="' + esc(r.id) + '"><div class="card-top"><div><h3>Cuadrilla ' + esc(r.numero || "") + '</h3><div class="loc">' + esc(tc(r.sede)) + '</div></div>' +
-    (r.placa ? '<span class="plate" title="Placa del vehículo">' + esc(r.placa) + '</span>' : '<span class="plate none">Sin placa</span>') + '</div>';
-  h += '<div class="roster">' + personas(r).map(function(p) { return personHtml(r, p); }).join("") + '</div>';
+  var editing = state.editing === r.id, show = !!state.openCards[r.id] || editing;
+  // Vista cerrada: solo cuadrilla, sede y placa. Al tocar se despliega todo el detalle.
+  var h = '<article class="card' + (show ? " open" : "") + '" data-id="' + esc(r.id) + '">' +
+    '<button type="button" class="card-top" data-card="' + esc(r.id) + '" aria-expanded="' + show + '">' +
+    '<div class="lt"><span class="num">' + ico("users") + '</span><div><h3>Cuadrilla ' + esc(r.numero || "") + '</h3><div class="loc pin">' + ico("pin") + esc(tc(r.sede)) + '</div></div></div>' +
+    '<span class="right">' + (r.placa ? '<span class="plate" title="Placa del vehículo">' + esc(r.placa) + '</span>' : '<span class="plate none">Sin placa</span>') +
+    '<span class="chev">' + ico("down") + '</span></span></button>';
+  if (!show) return h + '</article>';
+
+  h += '<div class="card-body"><div class="roster">' + personas(r).map(function(p) { return personHtml(r, p); }).join("") + '</div>';
 
   if (editing) {
     h += '<div class="editbox"><div class="fgrid">';
@@ -559,7 +631,7 @@ function cardHtml(r) {
       h += '</div>';
     });
     h += '</div><div class="actions" style="padding-top:4px"><button class="btn primary" data-act="save" data-id="' + esc(r.id) + '">Guardar cambios</button><button class="btn" data-act="cancel">Cancelar</button></div></div>';
-  } else if (open) {
+  } else {
     h += '<dl class="detail" style="margin-bottom:0">' +
       '<div class="kv"><dt>Fecha en campo</dt><dd>' + esc(fmtFecha(r.fecha)) + '</dd></div>' +
       '<div class="kv"><dt>Sede de operación</dt><dd>' + esc(tc(r.sede)) + '</dd></div>' +
@@ -578,10 +650,7 @@ function cardHtml(r) {
       }).join("") + '<div class="h"><b>Registro inicial</b><div class="m">' + esc(r.registro) + (hist.length ? "" : " · sin modificaciones posteriores") + '</div></div></div>';
     }
   }
-  if (!editing) {
-    h += '<div class="card-foot"><button class="btn text" data-card="' + esc(r.id) + '" aria-expanded="' + open + '">' + (open ? "Ocultar detalle" : "Ver detalle") + ico(open ? "up" : "down") + '</button></div>';
-  }
-  return h + '</article>';
+  return h + '</div></article>';
 }
 
 /* ---------- eventos ---------- */
@@ -594,7 +663,7 @@ document.addEventListener("click", function(e) {
   var mk = e.target.closest("[data-mark]");
   if (mk) { state.marking = state.marking === mk.dataset.mark ? "" : mk.dataset.mark; return renderDay(); }
   var card = e.target.closest("[data-card]");
-  if (card) { var id = card.dataset.card; state.openCards[id] = !state.openCards[id]; return renderDay(); }
+  if (card) { var id = card.dataset.card; if (state.editing === id) return; state.openCards[id] = !state.openCards[id]; state.marking = ""; return renderDay(); }
   var day = e.target.closest("[data-day]");
   if (day) { state.selected = day.dataset.day; state.marking = ""; state.editing = null; state.animate = true; render(); }
 });
